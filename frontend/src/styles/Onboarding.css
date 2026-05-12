@@ -1,0 +1,376 @@
+/* =========================
+   GLOBAL CONTAINER
+========================= */
+
+.onboarding {
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #f5f7fb;
+  color: #111827;
+
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
+}
+
+/* =========================
+   DARK MODE
+========================= */
+
+.onboarding.dark {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+/* =========================
+   GLOBAL TEXT FIX
+========================= */
+
+.onboarding h1,
+.onboarding h2,
+.onboarding h3,
+.onboarding p,
+.onboarding label,
+.onboarding span,
+.onboarding div {
+  color: inherit;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.onboarding-header {
+
+  width: 100%;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 22px 40px;
+
+  backdrop-filter: blur(10px);
+}
+
+/* =========================
+   LOGO
+========================= */
+
+.logo {
+
+  font-size: 1.6rem;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+/* =========================
+   THEME BUTTON
+========================= */
+
+.theme-toggle {
+
+  width: 45px;
+  height: 45px;
+
+  border: none;
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  font-size: 1rem;
+
+  background: rgba(255,255,255,0.15);
+
+  color: inherit;
+
+  transition: 0.25s ease;
+}
+
+.theme-toggle:hover {
+
+  transform: scale(1.08);
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.onboarding-main {
+
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px 20px;
+}
+
+/* =========================
+   CARD
+========================= */
+
+.hero-card {
+
+  width: 100%;
+  max-width: 720px;
+
+  padding: 45px;
+
+  border-radius: 30px;
+
+  background: rgba(255,255,255,0.75);
+
+  border: 1px solid rgba(255,255,255,0.3);
+
+  backdrop-filter: blur(18px);
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.08);
+
+  color: #111827;
+
+  transition: 0.3s ease;
+}
+
+/* DARK CARD */
+
+.onboarding.dark .hero-card {
+
+  background: rgba(15,23,42,0.75);
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.4);
+
+  color: #f8fafc;
+}
+
+/* =========================
+   TITLE
+========================= */
+
+.onboarding-title {
+
+  text-align: center;
+
+  font-size: 2.4rem;
+  font-weight: 700;
+
+  margin-bottom: 12px;
+}
+
+/* =========================
+   SUBTITLE
+========================= */
+
+.onboarding-subtitle {
+
+  text-align: center;
+
+  font-size: 1rem;
+
+  opacity: 0.8;
+
+  line-height: 1.6;
+
+  margin-bottom: 35px;
+}
+
+/* =========================
+   SECTION TITLES
+========================= */
+
+.hero-card h3 {
+
+  margin-top: 30px;
+  margin-bottom: 18px;
+
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* =========================
+   OPTIONS
+========================= */
+
+.option {
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 16px 18px;
+
+  border-radius: 18px;
+
+  margin-bottom: 14px;
+
+  cursor: pointer;
+
+  background: rgba(255,255,255,0.55);
+
+  border: 1px solid transparent;
+
+  transition:
+    transform 0.2s ease,
+    border 0.2s ease,
+    background 0.2s ease;
+
+  color: #111827;
+}
+
+/* DARK OPTION */
+
+.onboarding.dark .option {
+
+  background: rgba(255,255,255,0.05);
+
+  color: #f8fafc;
+}
+
+/* HOVER */
+
+.option:hover {
+
+  transform: translateY(-2px);
+
+  border-color: #6366f1;
+}
+
+/* CHECKBOX */
+
+.option input {
+
+  width: 18px;
+  height: 18px;
+
+  cursor: pointer;
+}
+
+/* =========================
+   SELECT
+========================= */
+
+select {
+
+  width: 100%;
+
+  padding: 14px 16px;
+
+  border: none;
+  outline: none;
+
+  border-radius: 14px;
+
+  margin-top: 10px;
+
+  font-size: 1rem;
+
+  background: rgba(255,255,255,0.8);
+
+  color: #111827;
+
+  transition: 0.25s ease;
+}
+
+/* DARK SELECT */
+
+.onboarding.dark select {
+
+  background: rgba(255,255,255,0.08);
+
+  color: #f8fafc;
+}
+
+/* OPTION COLORS INSIDE SELECT */
+
+select option {
+
+  background: white;
+  color: #111827;
+}
+
+.onboarding.dark select option {
+
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.submit-btn {
+
+  width: 100%;
+
+  margin-top: 38px;
+
+  padding: 16px;
+
+  border: none;
+  border-radius: 18px;
+
+  cursor: pointer;
+
+  font-size: 1rem;
+  font-weight: 600;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #8b5cf6
+    );
+
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+/* BUTTON HOVER */
+
+.submit-btn:hover {
+
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 10px 25px rgba(99,102,241,0.35);
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+  .onboarding-header {
+
+    padding: 20px;
+  }
+
+  .hero-card {
+
+    padding: 28px;
+  }
+
+  .onboarding-title {
+
+    font-size: 1.9rem;
+  }
+
+  .onboarding-subtitle {
+
+    font-size: 0.95rem;
+  }
+}

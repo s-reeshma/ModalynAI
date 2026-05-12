@@ -1,0 +1,80 @@
+.profile-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f5f7fb;
+}
+
+.profile-card {
+  width: 420px;
+  background: white;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.profile-card h1 {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.profile-card input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  border: 1px solid #ccc;
+}
+
+.profile-stats {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+  font-size: 18px;
+}
+
+.profile-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.profile-buttons button {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+/* ---------------- DARK MODE ---------------- */
+
+body.dark-mode {
+  background: #0f172a;
+  color: white;
+}
+
+body.dark-mode .profile-page {
+  background: #0f172a;
+}
+
+body.dark-mode .profile-card {
+  background: #1e293b;
+  color: white;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .profile-card input {
+  background: #334155;
+  color: white;
+  border: 1px solid #475569;
+}
+
+body.dark-mode .profile-buttons button {
+  background: #334155;
+  color: white;
+}
+
+body.dark-mode .profile-buttons button:hover {
+  background: #475569;
+}
