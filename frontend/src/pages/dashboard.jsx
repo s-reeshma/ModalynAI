@@ -47,7 +47,7 @@ function Dashboard() {
 
       {/* HEADER */}
       <header className="dashboard-header">
-        <div className="logo">AdaptiveAI</div>
+        <div className="logo">Modalyn AI</div>
 
         <div className="header-right">
           <button
@@ -110,7 +110,7 @@ function Dashboard() {
             Your AI-powered adaptive learning companion is ready.
           </p>
 
-          <button className="start-btn">
+          <button className="start-btn" onClick={() => navigate("/learn")}>
             🚀 Start Learning
           </button>
 

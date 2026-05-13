@@ -8,6 +8,7 @@ import Signup from "./pages/signup";
 import Dashboard from "./pages/dashboard";
 import Profile from "./pages/Profile";
 import Onboarding from"./pages/Onboarding";
+import Learn from "./pages/Learn";
 
 function App() {
 
@@ -42,7 +43,12 @@ function App() {
         path="/onboarding"
         element={<Onboarding  />}
       />
-
+      <Route
+        path="/learn/:topic"
+        element={<Learn />}
+      />
+      <Route path="/learn"
+       element={<Learn />} />
     </Routes>
   );
 }
