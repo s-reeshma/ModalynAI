@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from app.db import users_collection
 from app.gemini_config import client
-
+import json
 router = APIRouter()
 
 
@@ -12,8 +12,10 @@ async def teach(data: dict):
     topic = data.get("topic")
 
     user = users_collection.find_one({"email": email})
-
-    prefs = user.get("teaching_preferences", {})
+    if not user:
+        return {"error": "User not found"}
+    else:
+        prefs = user.get("teaching_preferences", {})
 
     visual = prefs.get("visual", False)
     step = prefs.get("step_by_step", False)
@@ -75,12 +77,20 @@ async def teach(data: dict):
     Teaching Style:
     {detail_instruction}
 
-    Your response must contain:
+    Return the response ONLY in valid JSON.
 
-    1. Explanation
-    2. Analogy
-    3. Example
-    4. Practice Question (if needed)
+    Format:
+
+    {{
+    "explanation": "",
+    "analogy": "",
+    "example": "",
+    "practice": ""
+    }}
+
+    Do not use markdown.
+    Do not add extra text.
+    Do not wrap in ```json.
 
     Keep the teaching adaptive and engaging.
     """
@@ -123,6 +133,10 @@ async def teach(data: dict):
     # MODEL FALLBACK SYSTEM
     # -------------------------
 
+    # -------------------------
+# MODEL FALLBACK SYSTEM
+# -------------------------
+
     models = [
         "gemini-2.5-pro",
         "gemini-2.5-flash",
@@ -140,7 +154,19 @@ async def teach(data: dict):
                 contents=prompt
             )
 
-            ai_text = response.text
+            raw_text = response.text.strip()
+
+            # remove markdown if model adds it
+            raw_text = raw_text.replace("```json", "")
+            raw_text = raw_text.replace("```", "")
+
+            parsed = json.loads(raw_text)
+
+            ai_text = {
+                "explanation": parsed.get("explanation", ""),
+                "analogy": parsed.get("analogy", ""),
+                "example": parsed.get("example", ""),
+                "practice": parsed.get("practice", "")}
 
             print(f"SUCCESS WITH: {model_name}")
 
@@ -156,14 +182,16 @@ async def teach(data: dict):
 
     if ai_text is None:
 
-        ai_text = """
-        AI servers are currently overloaded.
-        Please try again in a moment.
-        """
-
+        ai_text = {
+            "explanation": "AI servers are currently overloaded. Please try again in a moment.",
+            "analogy": "",
+            "example": "",
+            "practice": ""
+        }
     return {
         "topic": topic,
-        "response": ai_text
+        "response": ai_text,
+        "preferences": prefs
     }
 
 

@@ -4,6 +4,7 @@ import API from "../api";
 import "../styles/Learn.css";
 
 function Learn() {
+
   const { topic } = useParams();
   const navigate = useNavigate();
 
@@ -18,8 +19,14 @@ function Learn() {
 
   const email = localStorage.getItem("userEmail");
 
+  // =========================
+  // FETCH LESSON
+  // =========================
+
   const fetchLesson = async (t) => {
+
     try {
+
       setLoading(true);
 
       const res = await API.post("/teach", {
@@ -28,65 +35,115 @@ function Learn() {
       });
 
       setData(res.data);
+
     } catch (err) {
+
       console.log(err);
+
     } finally {
+
       setLoading(false);
+
     }
   };
+
+  // =========================
+  // FEEDBACK
+  // =========================
+
   const handleFeedback = async (type) => {
 
-  try {
+    try {
 
-    const res = await API.post("/feedback", {
-      email,
-      topic,
-      feedback: type,
-      text: feedbackText,
-    });
+      const res = await API.post("/feedback", {
+        email,
+        topic,
+        feedback: type,
+        text: feedbackText,
+      });
 
-    console.log(res.data);
+      console.log(res.data);
 
-  } catch (err) {
-    console.log(err);
-  }
-};
+      setFeedbackText("");
+
+      alert("Feedback Saved ✅");
+
+    } catch (err) {
+
+      console.log(err);
+
+    }
+  };
+
+  // =========================
+  // LOAD TOPIC
+  // =========================
 
   useEffect(() => {
-    if (topic) fetchLesson(topic);
+
+    if (topic) {
+      fetchLesson(topic);
+    }
+
   }, [topic]);
 
+  // =========================
+  // START LEARNING
+  // =========================
+
   const handleStart = () => {
-    if (!inputTopic) return;
+
+    if (!inputTopic.trim()) return;
+
     navigate(`/learn/${inputTopic}`);
+
   };
 
   return (
+
     <div className={`learn-container ${darkMode ? "dark" : ""}`}>
 
-      {/* THEME TOGGLE */}
+      {/* =========================
+          THEME TOGGLE
+      ========================= */}
+
       <button
         className="theme-toggle"
         onClick={() => {
+
           const newTheme = !darkMode;
+
           setDarkMode(newTheme);
-          localStorage.setItem("theme", newTheme ? "dark" : "light");
+
+          localStorage.setItem(
+            "theme",
+            newTheme ? "dark" : "light"
+          );
         }}
       >
         {darkMode ? "☀" : "🌙"}
       </button>
 
-      {/* TITLE */}
+      {/* =========================
+          TITLE
+      ========================= */}
+
       <h1 className="learn-title">
         Adaptive Learning AI
       </h1>
 
-      {/* START SCREEN */}
+      {/* =========================
+          START SCREEN
+      ========================= */}
+
       {!topic && !data && (
+
         <div className="start-screen">
+
           <h1>What do you want to learn?</h1>
 
           <input
+            type="text"
             placeholder="e.g. recursion, arrays, OS"
             value={inputTopic}
             onChange={(e) => setInputTopic(e.target.value)}
@@ -95,47 +152,114 @@ function Learn() {
           <button onClick={handleStart}>
             Start Learning 🚀
           </button>
+
         </div>
       )}
 
-      {/* LOADING */}
-      {loading && <p className="loading">Generating lesson...</p>}
+      {/* =========================
+          LOADING
+      ========================= */}
 
-      {/* LESSON */}
-      {data && (
+      {loading && (
+        <p className="loading">
+          Generating lesson...
+        </p>
+      )}
+
+      {/* =========================
+          LESSON
+      ========================= */}
+
+      {data && data.response && (
+
         <div className="lesson-wrapper">
 
+          {/* EXPLANATION */}
           <div className="card">
-          <h2>{data.topic}</h2>
-          <p>{data.response}</p>
+
+            <h2>Explanation</h2>
+
+            <p>
+              {data.response.explanation}
+            </p>
+
           </div>
 
+          {/* ANALOGY */}
+          {data.response.analogy && (
+
           <div className="card">
-         <h2>Feedback</h2>
 
-        <textarea
-        className="feedback-input"
-        placeholder="Explain what you understood, what confused you, or how AI should teach you better..."
-        value={feedbackText}
-        onChange={(e) => setFeedbackText(e.target.value)}
-        />
+            <h2>Analogy</h2>
 
-        <div className="feedback-buttons">
+            <p>
+              {data.response.analogy}
+            </p>
 
-        <button onClick={() => handleFeedback("good")}>
-        I understood 👍
-        </button>
+          </div>)}
 
-        <button onClick={() => handleFeedback("bad")}>
-        I didn't understand 😕
-        </button>
+          {/* EXAMPLE */}
+          {data.response.example && (
+          <div className="card">
 
-        <button onClick={() => handleFeedback("custom")}>
-          Send Explanation 💬
-        </button>
+            <h2>Example</h2>
 
-      </div>
-        </div>
+            <p>
+              {data.response.example}
+            </p>
+
+          </div>)}
+
+          {/* PRACTICE */}
+          {data.response.practice && (
+          <div className="card">
+
+            <h2>Practice</h2>
+
+            <p>
+              {data.response.practice}
+            </p>
+
+          </div>)}
+
+          {/* FEEDBACK */}
+
+          <div className="card">
+
+            <h2>Feedback</h2>
+
+            <textarea
+              className="feedback-input"
+              placeholder="Explain what you understood, what confused you, or how AI should teach you better..."
+              value={feedbackText}
+              onChange={(e) =>
+                setFeedbackText(e.target.value)
+              }
+            />
+
+            <div className="feedback-buttons">
+
+              <button
+                onClick={() => handleFeedback("good")}
+              >
+                I understood 👍
+              </button>
+
+              <button
+                onClick={() => handleFeedback("bad")}
+              >
+                I didn't understand 😕
+              </button>
+
+              <button
+                onClick={() => handleFeedback("custom")}
+              >
+                Send Explanation 💬
+              </button>
+
+            </div>
+
+          </div>
 
         </div>
       )}
