@@ -1,7 +1,9 @@
 from fastapi import APIRouter
 from app.db import users_collection
+from app.gemini_config import client
 
 router = APIRouter()
+
 
 @router.post("/teach")
 async def teach(data: dict):
@@ -16,30 +18,155 @@ async def teach(data: dict):
     visual = prefs.get("visual", False)
     step = prefs.get("step_by_step", False)
     examples = prefs.get("examples", False)
+    analogies = prefs.get("analogies", False)
+    concise = prefs.get("concise", False)
+    practice = prefs.get("practice", False)
 
-    # 🔥 SIMPLE AI LOGIC (you can later replace with LLM)
+    detail_level = prefs.get("detail_level", "balanced")
 
-    explanation = f"{topic} is a concept explained in a simple way."
+    # -------------------------
+    # DETAIL LEVEL INSTRUCTION
+    # -------------------------
 
-    if step:
-        explanation = "Step 1: Understand basics. Step 2: Build intuition. Step 3: Apply."
+    detail_instruction = ""
 
-    analogy = "Think of it like organizing objects in real life."
+    if detail_level == "simple":
+
+        detail_instruction = """
+        Teach in a very simple and beginner-friendly way.
+        Avoid technical jargon.
+        Keep explanations short and intuitive.
+        """
+
+    elif detail_level == "balanced":
+
+        detail_instruction = """
+        Teach with balanced detail.
+        Explain concepts clearly while also introducing important technical ideas.
+        """
+
+    elif detail_level == "deep":
+
+        detail_instruction = """
+        Teach in depth.
+        Include detailed reasoning, internal working,
+        theory, technical terminology,
+        edge cases, and advanced intuition.
+        """
+
+    # -------------------------
+    # MAIN PROMPT
+    # -------------------------
+
+    prompt = f"""
+    You are an adaptive AI tutor.
+
+    Teach the topic: {topic}
+
+    Student Preferences:
+
+    Visual Learner: {visual}
+    Step By Step: {step}
+    Examples Wanted: {examples}
+    Practice Questions: {practice}
+    Concise Answers: {concise}
+    Analogies Wanted: {analogies}
+
+    Teaching Style:
+    {detail_instruction}
+
+    Your response must contain:
+
+    1. Explanation
+    2. Analogy
+    3. Example
+    4. Practice Question (if needed)
+
+    Keep the teaching adaptive and engaging.
+    """
+
+    # -------------------------
+    # DYNAMIC ADAPTATION
+    # -------------------------
 
     if visual:
-        analogy += " Imagine it visually like boxes inside boxes."
+        prompt += """
+        Use visual imagination and spatial explanations.
+        """
 
-    example = "Simple example will go here."
+    if step:
+        prompt += """
+        Break concepts into numbered steps.
+        """
 
     if examples:
-        example = f"Example of {topic} in real life / code."
+        prompt += """
+        Give practical real-world examples.
+        """
+
+    if analogies:
+        prompt += """
+        Use intuitive analogies.
+        """
+
+    if concise:
+        prompt += """
+        Keep explanations short and focused.
+        """
+
+    if practice:
+        prompt += """
+        At the end, give one practice question.
+        """
+
+    # -------------------------
+    # MODEL FALLBACK SYSTEM
+    # -------------------------
+
+    models = [
+        "gemini-2.5-pro",
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite"
+    ]
+
+    ai_text = None
+
+    for model_name in models:
+
+        try:
+
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
+
+            ai_text = response.text
+
+            print(f"SUCCESS WITH: {model_name}")
+
+            break
+
+        except Exception as e:
+
+            print(f"{model_name} FAILED:", e)
+
+    # -------------------------
+    # FALLBACK MESSAGE
+    # -------------------------
+
+    if ai_text is None:
+
+        ai_text = """
+        AI servers are currently overloaded.
+        Please try again in a moment.
+        """
 
     return {
-        "explanation": explanation,
-        "analogy": analogy,
-        "example": example,
-        "confidence_check": "Did you understand?"
+        "topic": topic,
+        "response": ai_text
     }
+
+
 @router.post("/feedback")
 async def feedback(data: dict):
 
@@ -48,17 +175,22 @@ async def feedback(data: dict):
     feedback = data.get("feedback")
 
     user = users_collection.find_one({"email": email})
+
     prefs = user.get("teaching_preferences", {})
 
-    # 🔥 BASIC ADAPTATION
+    # BASIC ADAPTATION
+
     if feedback == "bad":
+
         prefs["step_by_step"] = True
         prefs["examples"] = True
 
-    # 🧠 NEW: CUSTOM FEEDBACK (VERY IMPORTANT)
+    # CUSTOM FEEDBACK
+
     custom_text = data.get("text", "")
 
     if feedback == "custom" and custom_text:
+
         prefs["custom_notes"] = custom_text
 
     users_collection.update_one(

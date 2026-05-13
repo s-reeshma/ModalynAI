@@ -14,6 +14,7 @@ function Learn() {
   const [inputTopic, setInputTopic] = useState("");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
 
   const email = localStorage.getItem("userEmail");
 
@@ -33,6 +34,23 @@ function Learn() {
       setLoading(false);
     }
   };
+  const handleFeedback = async (type) => {
+
+  try {
+
+    const res = await API.post("/feedback", {
+      email,
+      topic,
+      feedback: type,
+      text: feedbackText,
+    });
+
+    console.log(res.data);
+
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   useEffect(() => {
     if (topic) fetchLesson(topic);
@@ -88,67 +106,35 @@ function Learn() {
         <div className="lesson-wrapper">
 
           <div className="card">
-            <h2>Explanation</h2>
-            <p>{data.explanation}</p>
-          </div>
-
-          <div className="card">
-            <h2>Analogy</h2>
-            <p>{data.analogy}</p>
-          </div>
-
-          <div className="card">
-            <h2>Example</h2>
-            <p>{data.example}</p>
+          <h2>{data.topic}</h2>
+          <p>{data.response}</p>
           </div>
 
           <div className="card">
          <h2>Feedback</h2>
 
         <textarea
-         className="feedback-input"
+        className="feedback-input"
         placeholder="Explain what you understood, what confused you, or how AI should teach you better..."
+        value={feedbackText}
+        onChange={(e) => setFeedbackText(e.target.value)}
         />
 
         <div className="feedback-buttons">
 
-         <button
-        onClick={() =>
-        API.post("/feedback", {
-          email,
-          topic,
-          feedback: "good",
-        })
-      }
-    >
-      I understood 👍
-    </button>
+        <button onClick={() => handleFeedback("good")}>
+        I understood 👍
+        </button>
 
-    <button
-      onClick={() =>
-        API.post("/feedback", {
-          email,
-          topic,
-          feedback: "bad",
-                })
-         }
-             >
+        <button onClick={() => handleFeedback("bad")}>
         I didn't understand 😕
-            </button>
+        </button>
 
-         <button
-            onClick={() =>
-                API.post("/feedback", {
-                    email,
-                    topic,
-                    feedback: "custom",
-                })
-             }
-            >
-            Send Explanation 💬
-            </button>
+        <button onClick={() => handleFeedback("custom")}>
+          Send Explanation 💬
+        </button>
 
-            </div>
+      </div>
         </div>
 
         </div>
