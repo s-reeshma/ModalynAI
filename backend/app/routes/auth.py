@@ -10,7 +10,9 @@ router = APIRouter()
 async def save_user(user: dict):
 
     try:
+        
         email = user.get("email")
+        print("SAVE USER CALLED:", email)
 
         if not email:
             return {"error": "Email is required"}
@@ -26,7 +28,7 @@ async def save_user(user: dict):
 
             "xp": 0,
             "streak": 0,
-
+            "learning_log": [],
             "completed_topics": [],
             "weak_areas": [],
             "learning_style": "unknown",
@@ -43,7 +45,7 @@ async def save_user(user: dict):
             "detail_level": "balanced"
             }
         }
-
+        print(user)
         # ✅ Create only if not exists (no duplicates)
         users_collection.update_one(
             {"email": email},
@@ -51,7 +53,7 @@ async def save_user(user: dict):
             upsert=True
         )
 
-        return {"message": "User saved successfully"}
+        return {"message": result.upserted_id}
 
     except Exception as e:
         return {"error": str(e)}
@@ -80,6 +82,7 @@ async def get_user(email: str):
                 "favorite_style": "",
                 "xp": 0,
                 "streak": 0,
+                "learning_log": [],
                 "completed_topics": [],
                 "weak_areas": [],
                 "learning_style": "unknown",

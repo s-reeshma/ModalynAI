@@ -4,6 +4,7 @@ from app.gemini_config import client
 import json
 router = APIRouter()
 
+lesson_cache = {}
 
 @router.post("/teach")
 async def teach(data: dict):
@@ -11,11 +12,19 @@ async def teach(data: dict):
     email = data.get("email")
     topic = data.get("topic")
 
+    cache_key = f"{email}:{topic}"
+
+    # -------------------------
+    # CACHE CHECK (SAVES QUOTA)
+    # -------------------------
+    if cache_key in lesson_cache:
+        return lesson_cache[cache_key]
+
     user = users_collection.find_one({"email": email})
     if not user:
         return {"error": "User not found"}
-    else:
-        prefs = user.get("teaching_preferences", {})
+
+    prefs = user.get("teaching_preferences", {})
 
     visual = prefs.get("visual", False)
     step = prefs.get("step_by_step", False)
@@ -26,173 +35,83 @@ async def teach(data: dict):
 
     detail_level = prefs.get("detail_level", "balanced")
 
-    # -------------------------
-    # DETAIL LEVEL INSTRUCTION
-    # -------------------------
-
     detail_instruction = ""
 
     if detail_level == "simple":
-
-        detail_instruction = """
-        Teach in a very simple and beginner-friendly way.
-        Avoid technical jargon.
-        Keep explanations short and intuitive.
-        """
-
+        detail_instruction = "Teach very simple and beginner-friendly."
     elif detail_level == "balanced":
-
-        detail_instruction = """
-        Teach with balanced detail.
-        Explain concepts clearly while also introducing important technical ideas.
-        """
-
+        detail_instruction = "Teach balanced with clarity + concepts."
     elif detail_level == "deep":
-
-        detail_instruction = """
-        Teach in depth.
-        Include detailed reasoning, internal working,
-        theory, technical terminology,
-        edge cases, and advanced intuition.
-        """
-
-    # -------------------------
-    # MAIN PROMPT
-    # -------------------------
+        detail_instruction = "Teach deeply with theory and intuition."
 
     prompt = f"""
-    You are an adaptive AI tutor.
+You are an adaptive AI tutor.
 
-    Teach the topic: {topic}
+Topic: {topic}
 
-    Student Preferences:
+Preferences:
+Visual: {visual}
+Step-by-step: {step}
+Examples: {examples}
+Analogies: {analogies}
+Concise: {concise}
+Practice: {practice}
 
-    Visual Learner: {visual}
-    Step By Step: {step}
-    Examples Wanted: {examples}
-    Practice Questions: {practice}
-    Concise Answers: {concise}
-    Analogies Wanted: {analogies}
+Style:
+{detail_instruction}
 
-    Teaching Style:
-    {detail_instruction}
-
-    Return the response ONLY in valid JSON.
-
-    Format:
-
-    {{
-    "explanation": "",
-    "analogy": "",
-    "example": "",
-    "practice": ""
-    }}
-
-    Do not use markdown.
-    Do not add extra text.
-    Do not wrap in ```json.
-
-    Keep the teaching adaptive and engaging.
-    """
+Return ONLY JSON:
+{{
+  "explanation": "",
+  "analogy": "",
+  "example": "",
+  "practice": ""
+}}
+"""
 
     # -------------------------
-    # DYNAMIC ADAPTATION
+    # ONLY ONE MODEL (FIX QUOTA BURN)
     # -------------------------
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt
+        )
 
-    if visual:
-        prompt += """
-        Use visual imagination and spatial explanations.
-        """
+        raw = response.text.strip()
+        raw = raw.replace("```json", "").replace("```", "")
 
-    if step:
-        prompt += """
-        Break concepts into numbered steps.
-        """
-
-    if examples:
-        prompt += """
-        Give practical real-world examples.
-        """
-
-    if analogies:
-        prompt += """
-        Use intuitive analogies.
-        """
-
-    if concise:
-        prompt += """
-        Keep explanations short and focused.
-        """
-
-    if practice:
-        prompt += """
-        At the end, give one practice question.
-        """
-
-    # -------------------------
-    # MODEL FALLBACK SYSTEM
-    # -------------------------
-
-    # -------------------------
-# MODEL FALLBACK SYSTEM
-# -------------------------
-
-    models = [
-        "gemini-2.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.5-flash-lite"
-    ]
-
-    ai_text = None
-
-    for model_name in models:
-
-        try:
-
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt
-            )
-
-            raw_text = response.text.strip()
-
-            # remove markdown if model adds it
-            raw_text = raw_text.replace("```json", "")
-            raw_text = raw_text.replace("```", "")
-
-            parsed = json.loads(raw_text)
-
-            ai_text = {
-                "explanation": parsed.get("explanation", ""),
-                "analogy": parsed.get("analogy", ""),
-                "example": parsed.get("example", ""),
-                "practice": parsed.get("practice", "")}
-
-            print(f"SUCCESS WITH: {model_name}")
-
-            break
-
-        except Exception as e:
-
-            print(f"{model_name} FAILED:", e)
-
-    # -------------------------
-    # FALLBACK MESSAGE
-    # -------------------------
-
-    if ai_text is None:
+        parsed = json.loads(raw)
 
         ai_text = {
-            "explanation": "AI servers are currently overloaded. Please try again in a moment.",
+            "explanation": parsed.get("explanation", ""),
+            "analogy": parsed.get("analogy", ""),
+            "example": parsed.get("example", ""),
+            "practice": parsed.get("practice", "")
+        }
+
+    except Exception as e:
+        print("MODEL FAILED:", e)
+
+        ai_text = {
+            "explanation": "AI temporarily unavailable. Try again later.",
             "analogy": "",
             "example": "",
             "practice": ""
         }
-    return {
+
+    result = {
         "topic": topic,
         "response": ai_text,
         "preferences": prefs
     }
+
+    # -------------------------
+    # SAVE CACHE (VERY IMPORTANT)
+    # -------------------------
+    lesson_cache[cache_key] = result
+    print( lesson_cache[cache_key])
+    return result
 
 
 @router.post("/feedback")
@@ -201,32 +120,91 @@ async def feedback(data: dict):
     email = data.get("email")
     topic = data.get("topic")
     feedback = data.get("feedback")
+    text = data.get("text", "")
 
     user = users_collection.find_one({"email": email})
+    if not user:
+        return {"error": "User not found"}
 
     prefs = user.get("teaching_preferences", {})
 
-    # BASIC ADAPTATION
-
+    # -------------------------
+    # ADAPTIVE LEARNING RULES
+    # -------------------------
     if feedback == "bad":
-
         prefs["step_by_step"] = True
         prefs["examples"] = True
+        prefs["detail_level"] = "simple"
 
-    # CUSTOM FEEDBACK
+    if feedback == "good":
+        prefs["detail_level"] = "balanced"
 
-    custom_text = data.get("text", "")
+    if feedback == "custom":
+        prefs["custom_notes"] = text
 
-    if feedback == "custom" and custom_text:
+    # store learning history
+    learning_log = user.get("learning_log", [])
 
-        prefs["custom_notes"] = custom_text
+    learning_log.append({
+        "topic": topic,
+        "feedback": feedback,
+        "text": text,
+    })
 
     users_collection.update_one(
         {"email": email},
-        {"$set": {"teaching_preferences": prefs}}
+        {
+            "$set": {
+                "teaching_preferences": prefs,
+                "learning_log": learning_log
+            }
+        }
     )
-
+    print(learning_log)
     return {
         "message": "Feedback saved",
         "updated_preferences": prefs
     }
+
+@router.post("/practice-check")
+async def practice_check(data: dict):
+
+    email = data.get("email")
+    topic = data.get("topic")
+    question = data.get("question")
+    answer = data.get("answer")
+
+    prompt = f"""
+        You are an AI tutor evaluating a student's answer.
+
+        Topic: {topic}
+        Question: {question}
+        Student Answer: {answer}
+
+        Return JSON:
+        {{
+        "correct": true/false,
+        "feedback": "",
+        "improved_answer": ""
+        }}
+        """
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt
+        )
+
+        raw = response.text.strip()
+        raw = raw.replace("```json", "").replace("```", "")
+
+        parsed = json.loads(raw)
+
+        return parsed
+
+    except Exception as e:
+        return {
+            "correct": False,
+            "feedback": "Could not evaluate answer.",
+            "improved_answer": ""
+        }
