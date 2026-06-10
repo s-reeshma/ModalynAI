@@ -14,3 +14,4 @@ client = MongoClient(
 
 db = client["adaptive_ai"]
 users_collection = db["users"]
+lessons_collection = db["lessons"]
