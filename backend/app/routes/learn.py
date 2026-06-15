@@ -25,56 +25,53 @@ async def teach(data: dict):
     if not email or not raw_topic:
         raise HTTPException(status_code=400, detail="Email and topic are required")
 
-    # 🚨 CRITICAL FIX: Normalize the topic before doing anything else
-    clean_topic = normalize_topic(raw_topic)
-
+    # 1. Fetch user
     user = users_collection.find_one({"email": email})
     if not user:
         return {"error": "User not found"}
 
+    # 2. Safely get scores & determine dominant style
+    raw_scores = user.get("learning_style", {})
+    if not isinstance(raw_scores, dict):
+        style_scores = {"visual": 1.0, "reading": 1.0, "kinesthetic": 1.0, "auditory": 1.0}
+    else:
+        style_scores = {k: float(str(v)) for k, v in raw_scores.items()}
+    
+    dominant_style = max(style_scores, key=style_scores.get)
+    
+    # 3. Setup instructions
+    clean_topic = normalize_topic(raw_topic)
     prefs = user.get("teaching_preferences", {})
     detail_level = prefs.get("detail_level", "balanced")
 
-    # Use the 'clean_topic' for the database lookup!
-    cached_lesson = lessons_collection.find_one({
-        "email": email,
-        "topic": clean_topic, # <--- Updated
-        "detail_level": detail_level
-    })
+    detail_instruction = {
+        "simple": "Teach very simple and beginner-friendly.",
+        "balanced": "Teach balanced with clarity + concepts.",
+        "deep": "Teach deeply with theory and intuition."
+    }.get(detail_level, "Teach balanced with clarity + concepts.")
 
-    if cached_lesson:
-        print(f"🚀 Cache Hit for: {clean_topic}")
-        return {
-            "topic": clean_topic, # <--- Return clean topic to UI
-            "response": cached_lesson["response"],
-            "preferences": prefs,
-            "from_cache": True
-        }
+    style_prompts = {
+        "visual": "Use markdown tables, ASCII diagrams, and distinct visual formatting. Explain concepts using visual structures.",
+        "reading": "Use detailed paragraphs, structured headers, and comprehensive text-based explanations.",
+        "kinesthetic": "Include 'Try it yourself' coding tasks, step-by-step logic, and interactive, hands-on examples.",
+        "auditory": "Use a conversational, spoken-word tone with rhythmic structure and engaging analogies as if talking to a friend."
+    }
 
-    # If cache misses, compute the prompt instructions
-    detail_instruction = ""
-    if detail_level == "simple":
-        detail_instruction = "Teach very simple and beginner-friendly."
-    elif detail_level == "balanced":
-        detail_instruction = "Teach balanced with clarity + concepts."
-    elif detail_level == "deep":
-        detail_instruction = "Teach deeply with theory and intuition."
-
+    # 4. Inject EVERYTHING into the prompt
     prompt = f"""
     You are an adaptive AI tutor.
-    Topic: {topic}
-
-    Preferences:
-    Visual: {prefs.get("visual", False)}
-    Step-by-step: {prefs.get("step_by_step", False)}
-    Examples: {prefs.get("examples", False)}
-    Analogies: {prefs.get("analogies", False)}
-    Concise: {prefs.get("concise", False)}
-    Practice: {prefs.get("practice", False)}
-
-    Style:
+    Topic: {clean_topic}
+    Dominant Learning Style: {dominant_style}
+    
+    Instructional Rules:
     {detail_instruction}
+    Style Adaptation: {style_prompts.get(dominant_style)}
+
+    User Preferences:
+    {json.dumps(prefs)}
     """
+
+    # ... (rest of your logic remains the same)
 
     try:
         # Use Gemini native Structured Outputs to guarantee a valid JSON object
@@ -100,7 +97,7 @@ async def teach(data: dict):
         }
 
     result = {
-        "topic": topic,
+        "topic": clean_topic,
         "response": ai_text,
         "preferences": prefs
     }
@@ -111,10 +108,10 @@ async def teach(data: dict):
     if "error" not in ai_text.get("explanation", ""):
         # 1. Save lesson to the persistent global cache collection
         lessons_collection.update_one(
-            {"email": email, "topic": topic, "detail_level": detail_level},
+            {"email": email, "topic": clean_topic, "detail_level": detail_level},
             {"$set": {
                 "email": email,
-                "topic": topic,
+                "topic": clean_topic,
                 "detail_level": detail_level,
                 "response": ai_text,
                 "timestamp": datetime.utcnow()
@@ -127,7 +124,7 @@ async def teach(data: dict):
             {"email": email},
             {"$addToSet": {
                 "learning_log": {
-                    "topic": topic,
+                    "topic": clean_topic,
                     "timestamp": datetime.utcnow(),
                     "action": "lesson_generated"
                 }
@@ -178,29 +175,22 @@ async def feedback(data: dict):
     elif feedback_status == "good":
         prefs["detail_level"] = "balanced"
 
-    if feedback_status == "custom":
-        prefs["custom_notes"] = text
-
-    # Push structured object to array
-    new_log_entry = {
-        "topic": topic,
-        "feedback": feedback_status,
-        "text": text,
-        "timestamp": datetime.utcnow()
-    }
-
-    users_collection.update_one(
-        {"email": email},
-        {
-            "$set": {"teaching_preferences": prefs},
-            "$push": {"learning_log": new_log_entry}
-        }
-    )
-    return {
-        "message": "Feedback saved",
-        "updated_preferences": prefs
-    }
-
+    if feedback_status == "custom" and text:
+        # Ask Gemini to categorize
+        analysis = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"Classify this student feedback into visual, reading, kinesthetic, or auditory: '{text}'"
+        )
+        detected_style = analysis.text.strip().lower()
+        
+        # Update weights (Only once!)
+        if detected_style in ["visual", "reading", "kinesthetic", "auditory"]:
+            users_collection.update_one(
+                {"email": email},
+                {"$inc": {f"learning_style.{detected_style}": 0.5}}
+            )
+            
+    return {"message": "Feedback saved", "updated_preferences": prefs}
 
 @router.post("/practice-check")
 async def practice_check(data: dict):

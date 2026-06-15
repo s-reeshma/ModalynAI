@@ -26,7 +26,6 @@ function Profile() {
   const fetchUser = async () => {
     try {
       const res = await API.get(`/get-user/${email}`);
-
       if (res.data) {
         setUser(res.data);
       } else {
@@ -83,7 +82,7 @@ function Profile() {
         {/* NAME */}
         <input
           disabled={!editMode}
-          value={user?.name || ""}
+          value={ user.name || ""}
           onChange={(e) =>
             setUser({ ...user, name: e.target.value })
           }

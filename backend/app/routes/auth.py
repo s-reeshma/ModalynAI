@@ -1,8 +1,18 @@
 from fastapi import APIRouter
 from app.db import users_collection
-
+from bson import ObjectId, Decimal128
 router = APIRouter()
-
+def json_serializable(doc):
+    """Recursively converts BSON types to JSON-friendly types."""
+    if isinstance(doc, ObjectId):
+        return str(doc)
+    if isinstance(doc, Decimal128):
+        return float(doc.to_decimal()) # Convert to standard float
+    if isinstance(doc, dict):
+        return {k: json_serializable(v) for k, v in doc.items()}
+    if isinstance(doc, list):
+        return [json_serializable(i) for i in doc]
+    return doc
 # -------------------------
 # SAVE USER (CREATE / INIT)
 # -------------------------
@@ -68,9 +78,9 @@ async def get_user(email: str):
     try:
         user = users_collection.find_one(
             {"email": email},
-            {"_id": 0}
+            
         )
-
+        user["_id"] = str(user["_id"])
         # ✅ ALWAYS return full structure (prevents frontend crash)
         if not user:
             return {
@@ -85,7 +95,12 @@ async def get_user(email: str):
                 "learning_log": [],
                 "completed_topics": [],
                 "weak_areas": [],
-                "learning_style": "unknown",
+                "learning_style":{
+                "visual": 1.0,
+                "reading": 1.0,
+                "kinesthetic": 1.0,
+                "auditory": 1.0
+                 },
                 "teaching_preferences": {
                 "visual": False,
                 "step_by_step": False,
@@ -99,7 +114,7 @@ async def get_user(email: str):
     }
             }
 
-        return user
+        return json_serializable(user)
 
     except Exception as e:
         return {"error": str(e)}

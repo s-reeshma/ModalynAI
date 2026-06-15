@@ -11,9 +11,9 @@ app.include_router(learn_router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"], # Your frontend URL
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"], # Allow all methods (GET, POST, etc.)
     allow_headers=["*"],
 )
 

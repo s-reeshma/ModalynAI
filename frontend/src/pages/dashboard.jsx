@@ -14,8 +14,6 @@ function Dashboard() {
   );
 
   const [menuOpen, setMenuOpen] = useState(false);
-
-  // ✅ FIX: start with null instead of {}
   const [userData, setUserData] = useState(null);
 
   const email = localStorage.getItem("userEmail");
@@ -27,7 +25,6 @@ function Dashboard() {
   const fetchUser = async () => {
     try {
       const res = await API.get(`/get-user/${email}`);
-
       if (res.data) {
         setUserData(res.data);
       }
@@ -35,108 +32,65 @@ function Dashboard() {
       console.log(error);
     }
   };
-
   const handleLogout = async () => {
     await signOut(auth);
     localStorage.clear();
     navigate("/login");
   };
-
   return (
     <div className={`dashboard ${darkMode ? "dark" : ""}`}>
-
-      {/* HEADER */}
+      {/* 1. HEADER */}
       <header className="dashboard-header">
-        <div className="logo">Modalyn AI</div>
-
+        <div className="logo"><h5>Modalyn AI</h5></div>
         <div className="header-right">
-          <button
-            className="dashboard-theme-toggle"
-            onClick={() => {
-              toggleTheme();
-              setDarkMode(localStorage.getItem("theme") === "dark");
-            }}
+          <button 
+            className="dashboard-theme-toggle" 
+            onClick={() => { toggleTheme(); setDarkMode(!darkMode); }}
           >
             {darkMode ? "☀" : "🌙"}
           </button>
-
-          <button
-            className="menu-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            ☰
-          </button>
+          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
         </div>
       </header>
-
-      {/* MENU */}
       {menuOpen && (
         <div className="dropdown-menu">
-
           <div className="menu-item" onClick={() => navigate("/profile")}>
             👤 Profile
           </div>
-
           <div className="menu-item">
             📚 Previous Topics
           </div>
-
           <div className="menu-item">
             🔥 Streak: {userData?.streak || 0}
           </div>
-
           <div className="menu-item">
             ⭐ XP: {userData?.xp || 0}
           </div>
-
           <div className="menu-item logout" onClick={handleLogout}>
             🚪 Logout
           </div>
-
         </div>
+
       )}
-
-      {/* MAIN */}
-      <main className="dashboard-main">
-
-        <div className="hero-card">
-
-          <h1 className="dashboard-title">
-            Welcome,
-            {userData?.name ? ` ${userData.name}` : ""} 👋
-          </h1>
-
-          <p className="dashboard-subtitle">
-            Your AI-powered adaptive learning companion is ready.
-          </p>
-
-          <button className="start-btn" onClick={() => navigate("/learn")}>
-            🚀 Start Learning
-          </button>
-
-        </div>
-
-        <div className="stats-grid">
-
-          <div className="stat-card">
-            <h2>🔥 Streak</h2>
-            <p>{userData?.streak || 0}</p>
-          </div>
-
-          <div className="stat-card">
-            <h2>⭐ XP</h2>
-            <p>{userData?.xp || 0}</p>
-          </div>
-
-          <div className="stat-card">
-            <h2>📚 Topics</h2>
-            <p>{userData?.completed_topics?.length || 0}</p>
-          </div>
-
-        </div>
-
+      {/* 2. HERO */}
+      <main className="hero-section">
+        <h1 className="dashboard-title">
+          Welcome, {userData?.name ? userData.name : ""} 
+        </h1>
+        <p className="dashboard-subtitle">
+          Your AI-powered adaptive learning companion is ready.
+        </p>
+        <button className="start-btn" onClick={() => navigate("/learn")}>
+          🚀 Start Learning
+        </button>
       </main>
 
+      {/* 3. STATS */}
+      <section className="stats-bar">
+        <div className="stat-card"><h2>🔥 Streak</h2><p>{userData?.streak || 0}</p></div>
+        <div className="stat-card"><h2>⭐ XP</h2><p>{userData?.xp || 0}</p></div>
+        <div className="stat-card"><h2>📚 Topics</h2><p>{userData?.completed_topics?.length || 0}</p></div>
+      </section>
     </div>
   );
 }
