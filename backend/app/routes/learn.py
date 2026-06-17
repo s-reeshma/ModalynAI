@@ -1,5 +1,6 @@
 
 from fastapi import APIRouter, HTTPException
+from app.models.schemas import UserProgress,LessonStep
 from app.db import users_collection, lessons_collection # Added persistent collection
 from app.gemini_config import client
 from google.genai import types # Added for native structured outputs
@@ -21,7 +22,7 @@ class TeachResponseSchema(BaseModel):
 async def teach(data: dict):
     email = data.get("email")
     raw_topic = data.get("topic")
-
+    clean_topic = normalize_topic(raw_topic)
     if not email or not raw_topic:
         raise HTTPException(status_code=400, detail="Email and topic are required")
 
@@ -38,9 +39,14 @@ async def teach(data: dict):
         style_scores = {k: float(str(v)) for k, v in raw_scores.items()}
     
     dominant_style = max(style_scores, key=style_scores.get)
+    existing_doc = lessons_collection.find_one({"email": email, "topic": clean_topic})
+    current_step = len(existing_doc.get("steps", [])) + 1 if existing_doc else 1
+    history_list = []
+    if existing_doc and "steps" in existing_doc:
+        # Extract only the titles or summaries for context
+        history_list = [s.get("content", {}).get("explanation", "")[:50] for s in existing_doc["steps"]]
     
     # 3. Setup instructions
-    clean_topic = normalize_topic(raw_topic)
     prefs = user.get("teaching_preferences", {})
     detail_level = prefs.get("detail_level", "balanced")
 
@@ -62,11 +68,16 @@ async def teach(data: dict):
     You are an adaptive AI tutor.
     Topic: {clean_topic}
     Dominant Learning Style: {dominant_style}
-    
+    PREVIOUSLY TAUGHT:{history_list}
+    CURRENT STEP: {current_step}
+    INSTRUCTION: 
+    1. Analyze the PREVIOUSLY TAUGHT steps.
+    2. Do NOT repeat content already covered. 
+    3. Generate the NEXT logical step in the progression. 
+       - If step 1 was a definition, step 2 must be an application or advanced concept.
     Instructional Rules:
     {detail_instruction}
     Style Adaptation: {style_prompts.get(dominant_style)}
-
     User Preferences:
     {json.dumps(prefs)}
     """
@@ -106,19 +117,24 @@ async def teach(data: dict):
     # WRITE TO PERSISTENT CACHE & UPDATE USER HISTORY
     # -------------------------------------------------------------
     if "error" not in ai_text.get("explanation", ""):
-        # 1. Save lesson to the persistent global cache collection
         lessons_collection.update_one(
             {"email": email, "topic": clean_topic, "detail_level": detail_level},
-            {"$set": {
-                "email": email,
-                "topic": clean_topic,
-                "detail_level": detail_level,
-                "response": ai_text,
-                "timestamp": datetime.utcnow()
-            }},
+            {
+                "$push": {
+                    "steps": {
+                        "step": current_step,
+                        "content": ai_text,
+                        "modality": dominant_style,
+                        "timestamp": datetime.utcnow()
+                    }
+                },
+                "$set": {
+                    "current_step": current_step,
+                    "last_updated": datetime.utcnow()
+                }
+            },
             upsert=True
         )
-
         # 2. Append this event to the user's interactive reading log history
         users_collection.update_one(
             {"email": email},
@@ -130,31 +146,24 @@ async def teach(data: dict):
                 }
             }}
         )
-
-    return result
+    return {"topic": clean_topic, "response": ai_text}
 
 
 @router.get("/history/{email}")
-async def get_history(email: str):
-    """
-    Returns a unique list of all chapters/topics the user has previously learned.
-    This feeds your frontend sidebar menu natively.
-    """
-    # Fetch all unique lessons generated for this user, sorted by most recent
-    cursor = lessons_collection.find({"email": email}).sort("timestamp", -1)
-    lessons = list(cursor)
-    
-    history_list = []
-    for lesson in lessons:
-        history_list.append({
-            "topic": lesson["topic"],
-            "detail_level": lesson["detail_level"],
-            "timestamp": lesson["timestamp"].strftime("%Y-%m-%d %H:%M:%S") if "timestamp" in lesson else None
-        })
-        
-    return {"history": history_list}
+async def get_history(email: str, topic: str = None):
+    # If a topic is requested, return the steps for that specific lesson
+    if topic:
+        lesson = lessons_collection.find_one({"email": email, "topic": topic})
+        if lesson:
+            # Convert ObjectId to string to prevent your 500 error!
+            steps = lesson.get("steps", [])
+            for step in steps:
+                if "_id" in step: step["_id"] = str(step["_id"])
+            return {"steps": steps}
+        return {"steps": []}
 
-
+    cursor = lessons_collection.find({"email": email}).sort("last_updated", -1)
+    return {"history": [{"topic": l["topic"], "detail_level": l["detail_level"]} for l in cursor]}
 @router.post("/feedback")
 async def feedback(data: dict):
     email = data.get("email")
@@ -228,3 +237,20 @@ async def practice_check(data: dict):
             "feedback": f"Could not evaluate answer: {str(e)}",
             "improved_answer": ""
         }
+@router.post("/add-step")
+async def add_next_step(data: dict):
+    email = data.get("email")
+    topic = data.get("topic")
+    step_data = data.get("step_data")
+
+    # Use $inc to atomically increment the step
+    # Use $push to add the new content to history
+    db.user_progress.update_one(
+        {"email": email, "topic": topic},
+        {
+            "$push": {"history": step_data},
+            "$inc": {"current_step": 1} 
+        },
+        upsert=True
+    )
+    return {"status": "success"}

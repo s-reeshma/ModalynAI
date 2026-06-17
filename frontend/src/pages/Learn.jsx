@@ -22,35 +22,45 @@ function Learn() {
 
   const [history, setHistory] = useState([]);
   const email = localStorage.getItem("userEmail");
+  const [lessonSteps, setLessonSteps] = useState([]);
+  const [lessonHistory, setLessonHistory] = useState([]);
 
-  const fetchHistory = async () => {
-    if (!email) return;
-    try {
-      const res = await API.get(`/history/${email}`);
-      setHistory(res.data.history || []);
-    } catch (err) {
-      console.log("Failed to fetch history:", err);
+
+const fetchLesson = async (t) => {
+  try {
+    setLoading(true);
+    // 1. Generate the next step
+    const res = await API.post("/teach", { email, topic: t });
+    setData(res.data);
+    setPracticeAnswer("");
+    setPracticeResult(null);
+
+    // 2. REFRESH the history ledger so the map() updates
+    // Call the same logic that fetches the full history
+    await fetchFullHistoryForTopic(t); 
+    
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+};
+const fetchFullHistoryForTopic = async (t) => {
+  if (!email || !t) return;
+  try {
+    // Correct URL structure with query parameter
+    const response = await API.get(`/history/${email}?topic=${t}`);
+    
+    // Check for the 'steps' key that we just added to the backend
+    if (response.data && response.data.steps) {
+      setLessonHistory(response.data.steps);
+    } else {
+      setLessonHistory([]);
     }
-  };
-
-  const fetchLesson = async (t) => {
-    try {
-      setLoading(true);
-      const res = await API.post("/teach", { email, topic: t });
-      setData(res.data);
-      setPracticeAnswer("");
-      setPracticeResult(null);
-      if (res.data.topic && res.data.topic !== t) {
-        navigate(`/learn/${res.data.topic}`, { replace: true });
-      }
-      fetchHistory();
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  } catch (err) {
+    console.log("Failed to fetch ledger:", err);
+  }
+};
   const checkAnswer = async () => {
     if (!practiceAnswer.trim()) return;
     try {
@@ -84,11 +94,36 @@ function Learn() {
       console.log(err);
     }
   };
+  const gotonext = async (type) => {
+    try {
+      await API.post("/teach", {
+        email,
+        topic,
+      });
+      fetchLesson(topic);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  const fetchHistory = async () => {
+  if (!email) return;
+  try {
+    const response = await API.get(`/history/${email}`);
+    if (response.data && response.data.history) {
+      setHistory(response.data.history);
+    } else {
+      setHistory([]);
+    }
+  } catch (err) {
+    console.log("Failed to fetch sidebar history:", err);
+  }
+};
 
   useEffect(() => {
     fetchHistory();
-    if (topic) fetchLesson(topic);
-  }, [topic]);
+    if (topic) {
+    fetchFullHistoryForTopic(topic); // 2. Load the new topic's content
+  }}, [topic]);
 
   const handleStart = () => {
     if (!inputTopic.trim()) return;
@@ -98,27 +133,22 @@ function Learn() {
   return (
     <div className={`learn-container ${darkMode ? "dark" : ""}`}>
       
-      {/* 👇 NEW: TOP RIGHT CONTROLS */}
+      {/* TOP RIGHT CONTROLS */}
       <div className="top-right-controls">
-        <button 
-          className="dashboard-btn" 
-          onClick={() => navigate("/dashboard")}
-        >
+        <button className="dashboard-btn" onClick={() => navigate("/dashboard")}>
           Dashboard
         </button>
-        
         <button
           className="theme-toggle"
           onClick={() => {
             const newTheme = !darkMode;
             setDarkMode(newTheme);
             localStorage.setItem("theme", newTheme ? "dark" : "light");
-          }}
+          }}c
         >
           {darkMode ? "☀️" : "🌙"}
         </button>
       </div>
-      {/* 👆 END CONTROLS */}
 
       {/* LEFT SIDEBAR */}
       <aside className="history-sidebar">
@@ -162,33 +192,40 @@ function Learn() {
           </div>
         )}
 
-        {/* LOADING */}
-        {loading && <div className="loading">Generating lesson</div>}
-
-        {/* LESSON DATA */}
-        {data && data.response && !loading && (
+        {/* LESSON HISTORY */}
+        {topic && (
           <div className="lesson-wrapper">
             
-            <div className="card">
-              <h2>Explanation</h2>
-              <p>{data.response.explanation}</p>
-            </div>
+            {/* 1. Map over history */}
+            {lessonHistory.map((step, index) => (
+              <div key={index} className="card">
+                <h2>Step {index + 1}</h2>
+                <div className="step-content">
+                  <h3>Explanation</h3>
+                  <p>{step.content.explanation}</p>
+                  
+                  {step.content.analogy && (
+                    <>
+                      <h3>Analogy</h3>
+                      <p>{step.content.analogy}</p>
+                    </>
+                  )}
 
-            {data.response.analogy && (
-              <div className="card">
-                <h2>Analogy</h2>
-                <p>{data.response.analogy}</p>
+                  {step.content.example && (
+                    <>
+                      <h3>Example</h3>
+                      <p>{step.content.example}</p>
+                    </>
+                  )}
+                </div>
               </div>
-            )}
+            ))}
 
-            {data.response.example && (
-              <div className="card">
-                <h2>Example</h2>
-                <p>{data.response.example}</p>
-              </div>
-            )}
+            {/* 2. Loading state */}
+            {loading && <div className="loading">Generating next step...</div>}
 
-            {data.response.practice && (
+            {/* 3. Practice Block */}
+            {data && data.response && data.response.practice && (
               <div className="card">
                 <h2>Practice</h2>
                 <p>{data.response.practice}</p>
@@ -218,7 +255,7 @@ function Learn() {
               </div>
             )}
 
-            {/* FEEDBACK BLOCK */}
+            {/* 4. Feedback Block */}
             <div className="card" style={{ background: "transparent", border: "none", padding: "1rem 0" }}>
               <h2 style={{ fontSize: "1rem" }}>Help the AI adapt to you</h2>
               <textarea
@@ -231,14 +268,14 @@ function Learn() {
                 <button onClick={() => handleFeedback("good")}>Got it 👍</button>
                 <button onClick={() => handleFeedback("bad")}>Still confused 😕</button>
                 <button className="primary-btn" onClick={() => handleFeedback("custom")}>Send Note</button>
+                <button className="next" onClick={() => gotonext("custom")}>Next</button>
               </div>
             </div>
-
           </div>
         )}
       </main>
-    </div>
+    </div> // This closes the learn-container
   );
-}
+};
 
 export default Learn;
