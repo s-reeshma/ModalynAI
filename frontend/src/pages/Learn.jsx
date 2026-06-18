@@ -1,7 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import mermaid from 'mermaid';
+import {  useRef } from 'react';
 import API from "../api";
 import "../styles/Learn.css";
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose', // Important for local development
+});
 
 function Learn() {
   const { topic } = useParams();
@@ -48,8 +55,9 @@ const fetchLesson = async (t) => {
 const fetchFullHistoryForTopic = async (t) => {
   if (!email || !t) return;
   try {
-    // Correct URL structure with query parameter
-    const response = await API.get(`/history/${email}?topic=${t}`);
+    const encodedEmail = encodeURIComponent(email);
+    const encodedTopic = encodeURIComponent(t);
+    const response = await API.get(`/history/${encodedEmail}?topic=${encodedTopic}`);
     
     // Check for the 'steps' key that we just added to the backend
     if (response.data && response.data.steps) {
@@ -118,7 +126,59 @@ const fetchFullHistoryForTopic = async (t) => {
     console.log("Failed to fetch sidebar history:", err);
   }
 };
+const MermaidChart = ({ code }) => {
+  const ref = useRef(null);
 
+  useEffect(() => {
+  if (ref.current && code) {
+    const cleanCode = code.replace(/```mermaid/g, '').replace(/```/g, '').trim();
+    ref.current.innerHTML = cleanCode;
+    ref.current.removeAttribute('data-processed'); // Force Mermaid to re-process this
+    mermaid.init(undefined, ref.current);
+  }
+}, [code]);
+
+  // Use an empty div; the innerHTML is managed by the useEffect
+  return <div className="mermaid" ref={ref} />;
+};
+const ContentRenderer = ({ content }) => {
+  if (!content) return null;
+
+  return (
+    <div className="step-content">
+      {/* 1. Universal Content */}
+      <p>{content.explanation}</p>
+
+      {/* 2. Visual Layer (Mermaid or Images) */}
+      {content.diagram_code && (
+  <div className="visual-code">
+    {/* Only render the component, not the raw text */}
+    <MermaidChart code={content.diagram_code} />
+  </div>
+)}
+      {content.image_url && (
+        <div className="visual-media">
+          <img src={content.image_url} alt="Concept diagram" style={{ maxWidth: '100%', borderRadius: '8px' }} />
+        </div>
+      )}
+
+      {/* 3. Auditory Layer */}
+      {content.audio_url && (
+        <div className="audio-media">
+          <audio controls src={`http://localhost:8000${content.audio_url}`} />
+        </div>
+      )}
+
+      {/* 4. Kinesthetic Layer */}
+      {content.kinesthetic_task && (
+        <div className="kinesthetic-task">
+          <h4>Interactive Task</h4>
+          <p>{content.kinesthetic_task}</p>
+        </div>
+      )}
+    </div>
+  );
+};
   useEffect(() => {
     fetchHistory();
     if (topic) {
@@ -194,35 +254,18 @@ const fetchFullHistoryForTopic = async (t) => {
 
         {/* LESSON HISTORY */}
         {topic && (
-          <div className="lesson-wrapper">
-            
-            {/* 1. Map over history */}
-            {lessonHistory.map((step, index) => (
-              <div key={index} className="card">
-                <h2>Step {index + 1}</h2>
-                <div className="step-content">
-                  <h3>Explanation</h3>
-                  <p>{step.content.explanation}</p>
-                  
-                  {step.content.analogy && (
-                    <>
-                      <h3>Analogy</h3>
-                      <p>{step.content.analogy}</p>
-                    </>
-                  )}
+  <div className="lesson-wrapper">
+    {lessonHistory.map((step, index) => (
+      <div key={index} className="card">
+        <h2>Step {step.step}</h2>
+        {/* Directly render here, no extra wrapper card */}
+        <ContentRenderer content={step.content} />
+      </div>
+    ))}
 
-                  {step.content.example && (
-                    <>
-                      <h3>Example</h3>
-                      <p>{step.content.example}</p>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-
-            {/* 2. Loading state */}
-            {loading && <div className="loading">Generating next step...</div>}
+    {loading && <div className="loading"><h3>Modalyn is preparing your lesson...</h3>
+    <div className="spinner"></div> 
+    <p><i>Building diagrams and synthesizing audio...</i></p></div>}
 
             {/* 3. Practice Block */}
             {data && data.response && data.response.practice && (

@@ -310,7 +310,25 @@ button.primary-btn {
   color: var(--button-text);
   border: none;
 }
+.visual-media img {
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
 
+.audio-media {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 8px;
+}
+
+.visual-code {
+    background: #f4f4f4;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+}
 button.primary-btn:hover:not(:disabled) {
   background: var(--accent-hover);
 }
