@@ -5,8 +5,32 @@ import uuid
 import asyncio
 import json
 import  edge_tts
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List, Optional, Literal, Union, Dict, Any
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+class TeachResponseSchema(BaseModel):
+    explanation: str
+
+class VisualTeachResponse(TeachResponseSchema):
+    type: Literal["visual"] = Field(default="visual")
+    engine: str = Field(default="framer_motion", description="'framer_motion' only.")
+    payload: dict = Field(description="A JSON object containing the visual data. For framer_motion, put the configuration here with an 'elements' array.")
+
+class ReadWriteTeachResponse(TeachResponseSchema):
+    type: Literal["read_write"] = Field(default="read_write")
+    markdown_content: str = Field(description="Rich markdown containing headings, code blocks, and KaTeX math formulas (wrapped in $$ or $).")
+    deep_dive_text: str
+
+class AuditoryTeachResponse(TeachResponseSchema):
+    type: Literal["auditory"] = Field(default="auditory")
+    audio_script: str
+
+class KinestheticTeachResponse(TeachResponseSchema):
+    type: Literal["kinesthetic"] = Field(default="kinesthetic")
+    task_json: dict = Field(description="JSON data representing the interactive task. Can be monaco, dnd, or sandpack engine.")
+
 async def generate_image(description: str):
     # DALL-E generation
     response = client.images.generate(

@@ -9,9 +9,9 @@ BASE_DIR = os.path.dirname(
 
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("Gemini_API_Key")
 
-print("API KEY LOADED:", API_KEY[:10], "...")
+print("API KEY LOADED:", API_KEY[:10] if API_KEY else "None", "...")
 if os.getenv("OPENAI_API_KEY"):
     print("API Key loaded successfully!")
 else:

@@ -1,80 +1,372 @@
+/* =========================================
+   PROFILE CSS - GLASSMORPHISM OVERHAUL
+========================================= */
+
 .profile-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #f5f7fb;
+  background-image: url('/bg.png'); /* Shared abstract background */
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-blend-mode: overlay;
+  background-color: var(--bg-main, #f5f7fa);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+}
+
+.profile-page .theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%; /* Make it perfectly circular to match Learn page */
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  z-index: 9999;
+}
+
+body.dark-mode .profile-page .theme-toggle {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.profile-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: stretch;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .profile-card {
-  width: 420px;
-  background: white;
-  padding: 40px;
+  width: 450px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 3rem;
   border-radius: 24px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-top: 4px solid #4f46e5;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+  height: max-content;
+}
+
+.analysis-card {
+  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .profile-card h1 {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .profile-card input {
   width: 100%;
-  padding: 14px;
-  margin-bottom: 16px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.25rem;
   border-radius: 12px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: rgba(255,255,255,0.5);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.profile-card input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.profile-card input:disabled {
+  background: rgba(0,0,0,0.02);
+  color: #6b7280;
 }
 
 .profile-stats {
   display: flex;
-  justify-content: space-between;
-  margin: 20px 0;
-  font-size: 18px;
+  justify-content: space-around;
+  margin: 1.5rem 0 2.5rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.05);
+  padding: 1rem;
+  border-radius: 12px;
 }
 
 .profile-buttons {
   display: flex;
-  gap: 12px;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .profile-buttons button {
-  flex: 1;
-  padding: 14px;
+  width: 100%;
+  padding: 1rem;
   border: none;
   border-radius: 12px;
   cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.primary-btn {
+  background: linear-gradient(135deg, #4f46e5, #ec4899);
+  color: white;
+  box-shadow: 0 4px 15px rgba(79, 70, 229, 0.2);
+}
+
+.primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.secondary-btn {
+  background: rgba(0,0,0,0.05);
+  color: #1f2937;
+}
+
+.secondary-btn:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.action-btn {
+  background: #10b981;
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
 }
 
 /* ---------------- DARK MODE ---------------- */
-
 body.dark-mode {
   background: #0f172a;
   color: white;
 }
 
 body.dark-mode .profile-page {
-  background: #0f172a;
+  background-color: #0f172a;
 }
 
 body.dark-mode .profile-card {
-  background: #1e293b;
-  color: white;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+  background: rgba(30, 41, 59, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+body.dark-mode .profile-card h1 {
+  color: #f8fafc;
 }
 
 body.dark-mode .profile-card input {
-  background: #334155;
+  background: rgba(0, 0, 0, 0.2);
   color: white;
-  border: 1px solid #475569;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-body.dark-mode .profile-buttons button {
-  background: #334155;
-  color: white;
+body.dark-mode .profile-card input:focus {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: #818cf8;
 }
 
-body.dark-mode .profile-buttons button:hover {
-  background: #475569;
+body.dark-mode .profile-card input:disabled {
+  color: #94a3b8;
+}
+
+body.dark-mode .profile-stats {
+  background: rgba(129, 140, 248, 0.1);
+  color: #818cf8;
+}
+
+body.dark-mode .secondary-btn {
+  background: rgba(255,255,255,0.05);
+  color: #f8fafc;
+}
+
+body.dark-mode .secondary-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+/* ---------------- WEAK AREAS ---------------- */
+.profile-weak-areas {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.profile-weak-areas strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+body.dark-mode .profile-weak-areas strong {
+  color: #f8fafc;
+}
+
+.weak-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.weak-tag {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.no-data {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+body.dark-mode .no-data {
+  color: #94a3b8;
+}
+
+/* ---------------- LEARNING PROFILE ---------------- */
+.learning-profile {
+  animation: fadeInUp 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 100%;
+}
+
+body.dark-mode .learning-profile {
+}
+
+.learning-profile h3 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #1f2937;
+}
+
+body.dark-mode .learning-profile h3 {
+  color: #f8fafc;
+}
+
+.skill-bar-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.skill-label {
+  width: 30%;
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+body.dark-mode .skill-label {
+  color: #cbd5e1;
+}
+
+.skill-bar {
+  width: 55%;
+  height: 12px;
+  background: rgba(0,0,0,0.05);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 0 5%;
+}
+
+body.dark-mode .skill-bar {
+  background: rgba(255,255,255,0.1);
+}
+
+.skill-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease-in-out;
+}
+
+.visual-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+.rw-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+.kinesthetic-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.auditory-fill { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+
+.skill-pct {
+  width: 10%;
+  text-align: right;
+  font-weight: 600;
+  color: #4f46e5;
+  font-size: 0.9rem;
+}
+
+body.dark-mode .skill-pct {
+  color: #818cf8;
+}
+
+/* ---------------- ANALYSIS TOGGLE BTN ---------------- */
+.analysis-toggle-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.analysis-toggle-btn:hover {
+  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .analysis-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .analysis-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
 }

@@ -15,11 +15,13 @@ function Dashboard() {
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [userData, setUserData] = useState(null);
+  const [lessonsCount, setLessonsCount] = useState(0);
 
   const email = localStorage.getItem("userEmail");
 
   useEffect(() => {
     fetchUser();
+    fetchHistory();
   }, []);
 
   const fetchUser = async () => {
@@ -30,6 +32,17 @@ function Dashboard() {
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const res = await API.get(`/history/${email}`);
+      if (res.data && res.data.history) {
+        setLessonsCount(res.data.history.length);
+      }
+    } catch (error) {
+      console.log("Error fetching history:", error);
     }
   };
   const handleLogout = async () => {
@@ -44,52 +57,73 @@ function Dashboard() {
         <div className="logo"><h5>Modalyn AI</h5></div>
         <div className="header-right">
           <button 
-            className="dashboard-theme-toggle" 
+            className="dashboard-theme-toggle square-btn" 
             onClick={() => { toggleTheme(); setDarkMode(!darkMode); }}
           >
             {darkMode ? "☀" : "🌙"}
           </button>
-          <button className="menu-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
+          
+          <div className="menu-container" style={{ position: "relative" }}>
+            <button className="menu-btn square-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
+            
+            {menuOpen && (
+              <div className="dropdown-menu">
+                <div className="menu-item" onClick={() => navigate("/profile")}>
+                  👤 Profile
+                </div>
+                <div className="menu-item">
+                  📚 Previous Topics
+                </div>
+                <div className="menu-item">
+                  🔥 Streak: {userData?.streak || 0}
+                </div>
+                <div className="menu-item">
+                  ⭐ XP: {userData?.xp || 0}
+                </div>
+                <div className="menu-item logout" onClick={handleLogout}>
+                  🚪 Logout
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
-      {menuOpen && (
-        <div className="dropdown-menu">
-          <div className="menu-item" onClick={() => navigate("/profile")}>
-            👤 Profile
-          </div>
-          <div className="menu-item">
-            📚 Previous Topics
-          </div>
-          <div className="menu-item">
-            🔥 Streak: {userData?.streak || 0}
-          </div>
-          <div className="menu-item">
-            ⭐ XP: {userData?.xp || 0}
-          </div>
-          <div className="menu-item logout" onClick={handleLogout}>
-            🚪 Logout
-          </div>
-        </div>
-
-      )}
       {/* 2. HERO */}
-      <main className="hero-section">
+      <main className="hero-section fade-in-up">
         <h1 className="dashboard-title">
-          Welcome, {userData?.name ? userData.name : ""} 
+          Welcome back, <span className="highlight">{userData?.name ? userData.name.split(' ')[0] : "Learner"}</span>
         </h1>
         <p className="dashboard-subtitle">
-          Your AI-powered adaptive learning companion is ready.
+          Your adaptive AI tutor is ready for another session.
         </p>
-        <button className="start-btn" onClick={() => navigate("/learn")}>
-          🚀 Start Learning
+        <button className="start-btn glow-effect" onClick={() => navigate("/learn")}>
+          <span className="icon">🚀</span> Resume Learning
         </button>
       </main>
 
       {/* 3. STATS */}
-      <section className="stats-bar">
-        <div className="stat-card"><h2>🔥 Streak</h2><p>{userData?.streak || 0}</p></div>
-        <div className="stat-card"><h2>⭐ XP</h2><p>{userData?.xp || 0}</p></div>
-        <div className="stat-card"><h2>📚 Topics</h2><p>{userData?.completed_topics?.length || 0}</p></div>
+      <section className="stats-bar stagger-in">
+        <div className="stat-card glass-panel">
+          <div className="stat-icon streak-icon">🔥</div>
+          <div className="stat-info">
+            <h2>{userData?.streak || 0} Day</h2>
+            <p>Current Streak</p>
+          </div>
+        </div>
+        <div className="stat-card glass-panel">
+          <div className="stat-icon xp-icon">⭐</div>
+          <div className="stat-info">
+            <h2>{userData?.xp || 0} XP</h2>
+            <p>Total Experience</p>
+          </div>
+        </div>
+        <div className="stat-card glass-panel">
+          <div className="stat-icon topics-icon">📚</div>
+          <div className="stat-info">
+            <h2>{lessonsCount}</h2>
+            <p>Topics Covered</p>
+          </div>
+        </div>
       </section>
     </div>
   );
