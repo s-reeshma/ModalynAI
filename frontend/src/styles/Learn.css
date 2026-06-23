@@ -2,14 +2,14 @@
    1. GEMINI-STYLE THEME VARIABLES
 ========================================= */
 :root {
-  --bg-main: #ffffff;
-  --bg-panel: #f0f4f9;
-  --bg-card: #ffffff;
-  --text-main: #1f1f1f;
-  --text-muted: #444746;
-  --border-color: #e3e3e3;
-  --accent-color: #0b57d0;
-  --accent-hover: #0842a0;
+  --bg-main: #f5f7fa;
+  --bg-panel: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --text-main: #1f2937;
+  --text-muted: #6b7280;
+  --border-color: rgba(229, 231, 235, 0.8);
+  --accent-color: #4f46e5;
+  --accent-hover: #4338ca;
   --button-text: #ffffff;
   
   --radius-sm: 12px;
@@ -21,15 +21,15 @@
 
 /* DARK MODE OVERRIDES */
 .dark {
-  --bg-main: #131314;
-  --bg-panel: #1e1e20;
-  --bg-card: #131314;
-  --text-main: #e3e3e3;
-  --text-muted: #c4c7c5;
-  --border-color: #444746;
-  --accent-color: #a8c7fa;
-  --accent-hover: #7ca5eb;
-  --button-text: #131314;
+  --bg-main: #0B0F19;
+  --bg-panel: #161B26;
+  --bg-card: rgba(22, 27, 38, 0.75);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --accent-color: #8B5CF6;
+  --accent-hover: #6366F1;
+  --button-text: #ffffff;
 }
 
 /* =========================================
@@ -46,6 +46,11 @@ body {
   display: flex;
   height: 100vh;
   overflow: hidden; /* Prevents whole page from scrolling */
+  background-image: url('/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-blend-mode: overlay;
   background-color: var(--bg-main);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -55,31 +60,37 @@ body {
   top: 1.5rem;
   right: 2rem;
   display: flex;
-  flex-direction: column; /* 👈 Forces items to stack top-to-bottom */
-  gap: 0.75rem; /* 👈 Adjusted spacing for vertical layout */
-  align-items: flex-end; /* 👈 Keeps both buttons pinned to the right side */
+  flex-direction: row; /* changed from column */
+  gap: 0.75rem;
+  align-items: center; /* changed from flex-end */
   z-index: 9999;
 }
 
 /* 2. The Dashboard Button */
 .dashboard-btn {
-  background: var(--bg-panel);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: white;
+  border: none;
   padding: 0 1.5rem;
   height: 48px; 
   border-radius: var(--radius-pill);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.dashboard-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
 }
 
 /* 3. The Theme Toggle (Notice: NO position: fixed here!) */
-.theme-toggle {
+.top-right-controls .theme-toggle {
   background: var(--bg-panel);
   color: var(--text-main);
   border: 1px solid var(--border-color);
@@ -94,11 +105,13 @@ body {
   transition: all 0.2s ease;
   padding: 0;
   position: relative; /* Forces it to obey the flex container */
+  top: auto;
+  right: auto;
 }
 
 /* Hover States */
-.dashboard-btn:hover,
-.theme-toggle:hover {
+.top-right-controls .dashboard-btn:hover,
+.top-right-controls .theme-toggle:hover {
   background: var(--border-color);
 }
 
@@ -196,7 +209,7 @@ body {
   font-size: 2.5rem;
   font-weight: 400;
   margin-bottom: 2.5rem;
-  background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570);
+  background: linear-gradient(90deg, #6366F1, #8B5CF6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   
@@ -233,11 +246,35 @@ body {
   gap: 1.5rem;
 }
 
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .card {
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   background: var(--bg-card);
-  padding: 2rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 2.5rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
+  border-top: 4px solid var(--accent-color);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark .card {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.card:hover {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+  transform: translateY(-4px);
+}
+
+.dark .card:hover {
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4);
 }
 
 .card h2 {
@@ -257,11 +294,12 @@ body {
 }
 
 .card p {
-  line-height: 1.7;
-  font-size: 1.05rem;
+  line-height: 1.8;
+  font-size: 1.15rem;
   color: var(--text-main);
   margin: 0;
   white-space: pre-wrap;
+  letter-spacing: 0.2px;
 }
 
 /* =========================================
@@ -306,14 +344,27 @@ button:hover:not(:disabled) {
 }
 
 button.primary-btn {
-  background: var(--accent-color);
-  color: var(--button-text);
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  color: white;
   border: none;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+button.primary-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  transform: translateY(-2px);
 }
 .visual-media img {
     margin: 1rem 0;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.mermaid-chart svg {
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 400px;
 }
 
 .audio-media {
@@ -328,9 +379,6 @@ button.primary-btn {
     padding: 1rem;
     border-radius: 8px;
     overflow-x: auto;
-}
-button.primary-btn:hover:not(:disabled) {
-  background: var(--accent-hover);
 }
 
 button:disabled {
@@ -358,19 +406,95 @@ button:disabled {
 
 /* GENERATING STATE */
 .loading {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--text-main);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  padding: 3.5rem 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 15px 50px rgba(0,0,0,0.1);
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 1.5rem;
   margin-top: 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: floatUp 0.6s ease-out forwards;
 }
-.loading::after {
-  content: "✨";
-  animation: pulse 1.5s infinite;
+
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
-@keyframes pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+
+.loading::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #6366F1, #8B5CF6, #4f46e5, #6366F1);
+  background-size: 300% 100%;
+  animation: gradientLoading 2s linear infinite;
+}
+
+@keyframes gradientLoading {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 0%; }
+}
+
+.loading h3 {
+  margin: 0;
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #6366F1, #8B5CF6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: pulseText 2.5s infinite;
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.loading .spinner {
+  width: 55px;
+  height: 55px;
+  border: 4px solid rgba(79, 70, 229, 0.1);
+  border-top: 4px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.loading p {
+  color: var(--text-muted);
+  font-size: 1rem;
+  margin: 0;
+  max-width: 80%;
+  line-height: 1.5;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* =========================================
+   MERMAID CHART RESETS
+========================================= */
+.mermaid-chart {
+  /* Reset global font settings that bleed into Mermaid's SVG calculations */
+  letter-spacing: normal !important;
+  line-height: normal !important;
+  font-family: "trebuchet ms", verdana, arial, sans-serif !important;
+  font-size: 16px !important;
+}
+
+.mermaid-chart svg {
+  max-width: 100%;
+  height: auto !important; /* Prevent vertical stretching */
 }
