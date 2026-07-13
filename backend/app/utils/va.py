@@ -15,8 +15,8 @@ class TeachResponseSchema(BaseModel):
 
 class VisualTeachResponse(TeachResponseSchema):
     type: Literal["visual"] = Field(default="visual")
-    engine: str = Field(default="framer_motion", description="'framer_motion' only.")
-    payload: dict = Field(description="A JSON object containing the visual data. For framer_motion, put the configuration here with an 'elements' array.")
+    engine: str = Field(default="StoryboardEngine", description="'StoryboardEngine', 'ProcessEngine', 'mermaid', or 'echarts'")
+    payload: dict = Field(description="A JSON object containing the visual data. For StoryboardEngine: { items: [{ icon, text }] }. For ProcessEngine: { steps: [] }")
 
 class ReadWriteTeachResponse(TeachResponseSchema):
     type: Literal["read_write"] = Field(default="read_write")

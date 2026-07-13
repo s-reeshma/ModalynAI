@@ -285,53 +285,255 @@ body.dark-mode .learning-profile h3 {
   color: #f8fafc;
 }
 
+/* Profile.css Refactored */
+
+.profile-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.profile-header {
+  margin-bottom: 0;
+}
+
+.profile-grid-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1000px;
+}
+
+/* Profile Main Card */
+.profile-card-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 2rem;
+}
+
+.profile-avatar {
+  font-size: 4rem;
+  background: var(--bg-hero);
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.profile-info h2 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-email {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.premium-badge {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.profile-input-large {
+  font-size: 2rem;
+  font-weight: bold;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--accent-color);
+  color: var(--text-main);
+  outline: none;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+/* Stats Row */
+.profile-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
+
+.stat-icon {
+  font-size: 2.2rem;
+  background: rgba(255,255,255,0.05);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.stat-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-details h3 {
+  font-size: 2rem;
+  margin: 0 0 0.25rem 0;
+  line-height: 1;
+}
+
+.stat-details p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  max-width: 100px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+/* Preferences & Learning Profile */
+.profile-preferences-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.preferences-card h3, .learning-profile-card h3 {
+  font-size: 1.3rem;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.pref-item {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pref-item label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pref-item input {
+  background: rgba(0,0,0,0.1);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.pref-item input:focus:not(:disabled) {
+  border-color: var(--accent-color);
+}
+
+.pref-item input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Skill Bars Re-use from Dashboard */
 .skill-bar-container {
   display: flex;
   align-items: center;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
 .skill-label {
-  width: 30%;
-  font-weight: 600;
-  color: #4b5563;
+  width: 100px;
   font-size: 0.9rem;
-}
-
-body.dark-mode .skill-label {
-  color: #cbd5e1;
+  font-weight: 500;
 }
 
 .skill-bar {
-  width: 55%;
-  height: 12px;
-  background: rgba(0,0,0,0.05);
-  border-radius: 6px;
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
   overflow: hidden;
-  margin: 0 5%;
-}
-
-body.dark-mode .skill-bar {
-  background: rgba(255,255,255,0.1);
 }
 
 .skill-fill {
   height: 100%;
-  border-radius: 6px;
-  transition: width 1s ease-in-out;
+  border-radius: 4px;
 }
 
-.visual-fill { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
-.rw-fill { background: linear-gradient(90deg, #10b981, #34d399); }
-.kinesthetic-fill { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
-.auditory-fill { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+.visual-fill { background: #3b82f6; }
+.rw-fill { background: #10b981; }
+.kinesthetic-fill { background: #f59e0b; }
+.auditory-fill { background: #8b5cf6; }
 
 .skill-pct {
-  width: 10%;
+  width: 40px;
   text-align: right;
-  font-weight: 600;
-  color: #4f46e5;
+  font-weight: bold;
   font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.weak-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.weak-tag {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.no-data {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+body.dark-mode .no-data {
+  color: #94a3b8;
 }
 
 body.dark-mode .skill-pct {
@@ -369,4 +571,65 @@ body.dark-mode .analysis-toggle-btn {
 
 body.dark-mode .analysis-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+/* ---------------- MINI STATS ROW ---------------- */
+.profile-mini-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.mini-stat-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+  flex: 1;
+}
+
+body.dark-mode .mini-stat-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.mini-stat-icon {
+  font-size: 1rem;
+}
+
+.mini-stat-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.mini-stat-text h3 {
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1;
+  color: #1f2937;
+}
+
+body.dark-mode .mini-stat-text h3 {
+  color: #f8fafc;
+}
+
+.mini-stat-text p {
+  font-size: 0.55rem;
+  margin: 0;
+  margin-top: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }

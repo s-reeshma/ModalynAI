@@ -1,0 +1,133 @@
+.progress-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.progress-grid-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 1000px;
+}
+
+.progress-card-main {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 2rem;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-top: 4px solid #ef4444;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.04);
+}
+
+body.dark-mode .progress-card-main {
+  background: rgba(30, 41, 59, 0.75);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+.progress-card-main h3 {
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+body.dark-mode .progress-card-main h3 {
+  color: #f8fafc;
+}
+
+.section-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+.struggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.struggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: rgba(239, 68, 68, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.struggle-item:hover {
+  transform: translateY(-2px);
+}
+
+body.dark-mode .struggle-item {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.struggle-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 150px;
+}
+
+.struggle-topic {
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-transform: capitalize;
+  color: #1f2937;
+}
+
+body.dark-mode .struggle-topic {
+  color: #f8fafc;
+}
+
+.struggle-score {
+  font-size: 0.85rem;
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.struggle-bar-container {
+  flex: 1;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+body.dark-mode .struggle-bar-container {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.struggle-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ef4444, #f87171);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.review-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.no-struggles {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+}
+
+.celebrate-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+}

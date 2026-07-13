@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import API from "../api";
 import "../styles/dashboard.css";
-import { toggleTheme } from "../utils/theme";
+import Sidebar from "../components/Sidebar";
+import { Flame, ArrowRight } from "lucide-react";
 
 function Dashboard() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [darkMode, setDarkMode] = useState(
     localStorage.getItem("theme") === "dark"
   );
 
-  const [menuOpen, setMenuOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const [lessonsCount, setLessonsCount] = useState(0);
 
@@ -45,86 +46,122 @@ function Dashboard() {
       console.log("Error fetching history:", error);
     }
   };
+
   const handleLogout = async () => {
     await signOut(auth);
     localStorage.clear();
     navigate("/login");
   };
-  return (
-    <div className={`dashboard ${darkMode ? "dark" : ""}`}>
-      {/* 1. HEADER */}
-      <header className="dashboard-header">
-        <div className="logo"><h5>Modalyn AI</h5></div>
-        <div className="header-right">
-          <button 
-            className="dashboard-theme-toggle square-btn" 
-            onClick={() => { toggleTheme(); setDarkMode(!darkMode); }}
-          >
-            {darkMode ? "☀" : "🌙"}
-          </button>
-          
-          <div className="menu-container" style={{ position: "relative" }}>
-            <button className="menu-btn square-btn" onClick={() => setMenuOpen(!menuOpen)}>☰</button>
-            
-            {menuOpen && (
-              <div className="dropdown-menu">
-                <div className="menu-item" onClick={() => navigate("/profile")}>
-                  👤 Profile
-                </div>
-                <div className="menu-item">
-                  📚 Previous Topics
-                </div>
-                <div className="menu-item">
-                  🔥 Streak: {userData?.streak || 0}
-                </div>
-                <div className="menu-item">
-                  ⭐ XP: {userData?.xp || 0}
-                </div>
-                <div className="menu-item logout" onClick={handleLogout}>
-                  🚪 Logout
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-      {/* 2. HERO */}
-      <main className="hero-section fade-in-up">
-        <h1 className="dashboard-title">
-          Welcome back, <span className="highlight">{userData?.name ? userData.name.split(' ')[0] : "Learner"}</span>
-        </h1>
-        <p className="dashboard-subtitle">
-          Your adaptive AI tutor is ready for another session.
-        </p>
-        <button className="start-btn glow-effect" onClick={() => navigate("/learn")}>
-          <span className="icon">🚀</span> Resume Learning
-        </button>
-      </main>
 
-      {/* 3. STATS */}
-      <section className="stats-bar stagger-in">
-        <div className="stat-card glass-panel">
-          <div className="stat-icon streak-icon">🔥</div>
-          <div className="stat-info">
-            <h2>{userData?.streak || 0} Day</h2>
-            <p>Current Streak</p>
+  const getStyleStrength = (styleKey) => {
+    const ls = userData?.learning_style || { visual: 1, reading: 1, kinesthetic: 1, auditory: 1 };
+    const v = Number(ls.visual) || 1;
+    const r = Number(ls.reading) || 1;
+    const k = Number(ls.kinesthetic) || 1;
+    const a = Number(ls.auditory) || 1;
+    
+    const maxWeight = Math.max(v, r, k, a);
+    const currentWeight = Number(ls[styleKey]) || 1;
+    
+    const diff = maxWeight - currentWeight;
+    
+    if (diff <= 2) return { label: "Strong", className: "strong" };
+    if (diff <= 5) return { label: "Medium", className: "medium" };
+    return { label: "Weak", className: "weak" };
+  };
+
+  return (
+    <div className={`dashboard-layout ${darkMode ? "dark" : ""}`}>
+      {/* LEFT SIDEBAR (Using Shared Component) */}
+      <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
+
+      {/* MAIN CONTENT AREA */}
+      <main className="main-content">
+        <header className="main-header">
+          <div className="welcome-text">
+            <h1>Welcome back, {userData?.name ? userData.name.split(' ')[0] : "Alex"}!</h1>
+            <p>Let's continue your learning journey.</p>
           </div>
-        </div>
-        <div className="stat-card glass-panel">
-          <div className="stat-icon xp-icon">⭐</div>
-          <div className="stat-info">
-            <h2>{userData?.xp || 0} XP</h2>
-            <p>Total Experience</p>
+          <div className="streak-badge">
+            <Flame className="streak-icon" size={24} color="#f59e0b" />
+            <div className="streak-info">
+              <span className="streak-num">{userData?.current_streak || userData?.streak || 0}</span>
+              <span className="streak-label">day streak</span>
+            </div>
           </div>
-        </div>
-        <div className="stat-card glass-panel">
-          <div className="stat-icon topics-icon">📚</div>
-          <div className="stat-info">
-            <h2>{lessonsCount}</h2>
-            <p>Topics Covered</p>
+        </header>
+
+        <section className="hero-card">
+          <div className="hero-content">
+            <h2>Ready to learn something new?</h2>
+            <p>Start a new topic and let Modalyn AI adapt to your learning style.</p>
+            <button className="start-btn" onClick={() => navigate("/learn")} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              Start Learning <ArrowRight size={18} />
+            </button>
           </div>
-        </div>
-      </section>
+          <div className="hero-graphic">
+            <div className="hologram-brain">🧠</div>
+          </div>
+        </section>
+
+        <section className="vark-section">
+          <h3>Your Learning Style (VARK)</h3>
+          <p className="section-subtitle">Modalyn AI adapts content to your preferences</p>
+          <div className="vark-grid">
+            <div className="vark-card">
+              <div className="vark-icon" style={{ color: "#8b5cf6" }}>👁️</div>
+              <h4>Visual</h4>
+              <p>Learn with images, diagrams and charts</p>
+              <span className={`vark-strength ${getStyleStrength("visual").className}`}>{getStyleStrength("visual").label}</span>
+            </div>
+            <div className="vark-card">
+              <div className="vark-icon" style={{ color: "#3b82f6" }}>((🔊))</div>
+              <h4>Auditory</h4>
+              <p>Learn with audio and discussions</p>
+              <span className={`vark-strength ${getStyleStrength("auditory").className}`}>{getStyleStrength("auditory").label}</span>
+            </div>
+            <div className="vark-card">
+              <div className="vark-icon" style={{ color: "#10b981" }}>✋</div>
+              <h4>Kinesthetic</h4>
+              <p>Learn by doing and practicing</p>
+              <span className={`vark-strength ${getStyleStrength("kinesthetic").className}`}>{getStyleStrength("kinesthetic").label}</span>
+            </div>
+            <div className="vark-card">
+              <div className="vark-icon" style={{ color: "#f59e0b" }}>📖</div>
+              <h4>Read/Write</h4>
+              <p>Learn with text and notes</p>
+              <span className={`vark-strength ${getStyleStrength("reading").className}`}>{getStyleStrength("reading").label}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="dashboard-stats-row">
+          <div className="mini-stats">
+            <div className="mini-stat-card">
+              <span className="stat-label">Topics Covered</span>
+              <h2 className="stat-value">{lessonsCount}</h2>
+              <span className="stat-link" onClick={() => navigate("/learn")}>View all topics →</span>
+            </div>
+            <div className="mini-stat-card">
+              <span className="stat-label">Experience (XP)</span>
+              <h2 className="stat-value">{userData?.xp || 0}</h2>
+              <span className="stat-link" onClick={() => navigate("/progress")}>View progress →</span>
+            </div>
+          </div>
+
+          <div className="weekly-activity-card">
+            <span className="stat-label">Weekly Activity</span>
+            <div className="mock-bar-chart">
+              <div className="bar-col"><div className="bar" style={{height: "40%"}}></div><span>Tue</span></div>
+              <div className="bar-col"><div className="bar" style={{height: "60%"}}></div><span>Wed</span></div>
+              <div className="bar-col"><div className="bar" style={{height: "80%"}}></div><span>Thu</span></div>
+              <div className="bar-col"><div className="bar" style={{height: "50%"}}></div><span>Fri</span></div>
+              <div className="bar-col"><div className="bar" style={{height: "90%"}}></div><span>Sat</span></div>
+              <div className="bar-col"><div className="bar" style={{height: "30%"}}></div><span>Sun</span></div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }

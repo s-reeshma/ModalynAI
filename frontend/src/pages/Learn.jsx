@@ -25,9 +25,10 @@ import { Sandpack } from '@codesandbox/sandpack-react';
 import ReactECharts from 'echarts-for-react';
 import CytoscapeComponent from 'react-cytoscapejs';
 import { Canvas } from 'reaflow';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import API from "../api";
 import "../styles/Learn.css";
+import Sidebar from "../components/Sidebar";
 
 // --- 1. Library Initialization ---
 mermaid.initialize({
@@ -67,12 +68,17 @@ class ErrorBoundary extends React.Component {
 }
 
 const ConceptMapRenderer = ({ data }) => {
-  const [nodes, setNodes, onNodesChange] = useNodesState(data?.nodes || []);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(data?.edges || []);
+  let mapData = data;
+  if (typeof mapData === 'string') {
+    try { mapData = JSON.parse(mapData); } catch (e) { console.error("Invalid ConceptMap payload", e); }
+  }
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(mapData?.nodes || []);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(mapData?.edges || []);
 
   const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
-  if (!data?.nodes) return <p>Loading concept map...</p>;
+  if (!mapData?.nodes) return <p>Loading concept map...</p>;
 
   return (
     <div style={{ height: '500px', width: '100%', border: '1px solid #ccc', borderRadius: '8px' }}>
@@ -133,33 +139,38 @@ const MermaidChart = ({ code, darkMode }) => {
 };
 
 const RechartsRenderer = ({ data }) => {
-  if (!data || !data.type) return <p>Invalid chart data.</p>;
+  let chartData = data;
+  if (typeof chartData === 'string') {
+    try { chartData = JSON.parse(chartData); } catch (e) { console.error("Invalid Recharts payload", e); }
+  }
+
+  if (!chartData || !chartData.type) return <p>Invalid chart data.</p>;
   
-  if (data.type === 'line') {
+  if (chartData.type === 'line') {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={data.data}>
+        <LineChart data={chartData.data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={data.xAxisKey || "name"} />
+          <XAxis dataKey={chartData.xAxisKey || "name"} />
           <YAxis />
           <Tooltip />
           <Legend />
-          {data.lines?.map((line, i) => (
+          {chartData.lines?.map((line, i) => (
             <Line key={i} type="monotone" dataKey={line.dataKey} stroke={line.stroke || "#8884d8"} />
           ))}
         </LineChart>
       </ResponsiveContainer>
     );
-  } else if (data.type === 'bar') {
+  } else if (chartData.type === 'bar') {
     return (
       <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data.data}>
+        <BarChart data={chartData.data}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey={data.xAxisKey || "name"} />
+          <XAxis dataKey={chartData.xAxisKey || "name"} />
           <YAxis />
           <Tooltip />
           <Legend />
-          {data.bars?.map((bar, i) => (
+          {chartData.bars?.map((bar, i) => (
             <Bar key={i} dataKey={bar.dataKey} fill={bar.fill || "#8884d8"} />
           ))}
         </BarChart>
@@ -240,44 +251,157 @@ const ReaflowRenderer = ({ data }) => {
 };
 
 const FramerMotionRenderer = ({ data }) => {
+  const [currentFrame, setCurrentFrame] = useState(0);
+
   if (!data) return <p>Loading animation...</p>;
   let animData = data;
   if (typeof animData === 'string') {
-    try { animData = JSON.parse(animData); } catch (e) { throw new Error("Invalid Framer Motion payload: Unparsable string"); }
-  }
-  if (!animData || !animData.elements) {
-    throw new Error("Invalid Framer Motion payload: Missing elements");
+    try { animData = JSON.parse(animData); } catch (e) { throw new Error("Invalid Framer payload"); }
   }
   
+  const frames = animData.frames || [];
+  if (!frames.length) return <p>No frames provided for animation.</p>;
+
   return (
-    <div style={{ minHeight: '300px', width: '100%', display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '2rem', overflow: 'hidden' }}>
-      {animData.elements.map((el, i) => (
+    <div style={{ minHeight: '300px', width: '100%', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-panel)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '2rem', overflow: 'hidden' }}>
+      
+      <h3 style={{ color: 'var(--text-main)', textAlign: 'center', minHeight: '60px' }}>
+        {frames[currentFrame].title}
+      </h3>
+
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', minHeight: '100px' }}>
+        <AnimatePresence mode="popLayout">
+          {frames[currentFrame].items?.map((item) => (
+            <motion.div
+              key={item} // Key must be the item string for layout animations to track it
+              layout
+              initial={{ opacity: 0, scale: 0.5, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.5, y: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              style={{
+                padding: '1rem 2rem',
+                background: 'var(--primary-color)',
+                color: '#fff',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '1.2rem',
+                boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {item}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
+      {/* Animation Controls */}
+      <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        <button 
+          className="primary-btn" 
+          disabled={currentFrame === 0} 
+          onClick={() => setCurrentFrame(f => f - 1)}
+        >
+          ⬅️ Previous
+        </button>
+        <button 
+          className="primary-btn" 
+          disabled={currentFrame === frames.length - 1} 
+          onClick={() => setCurrentFrame(f => f + 1)}
+        >
+          Next Step ➡️
+        </button>
+      </div>
+    </div>
+  );
+};
+// --- Cartridges ---
+const StoryboardEngine = ({ data }) => {
+  if (!data) return <p>Loading storyboard...</p>;
+  let storyboardData = data;
+  if (typeof storyboardData === 'string') {
+    try { storyboardData = JSON.parse(storyboardData); } catch (e) { throw new Error("Invalid Storyboard payload: Unparsable string"); }
+  }
+  if (!storyboardData.items) return <p>Loading storyboard...</p>;
+
+  return (
+    <div key={JSON.stringify(storyboardData.items)} style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', width: '100%', minHeight: '300px', background: 'var(--bg-panel)', borderRadius: '8px', border: '1px solid var(--border-color)', padding: '2rem', justifyContent: 'center', alignItems: 'stretch' }}>
+      {storyboardData.items.map((item, i) => (
         <motion.div
           key={i}
-          initial={el.initial || { opacity: 0, scale: 0.8 }}
-          animate={el.animate || { opacity: 1, scale: 1 }}
-          transition={el.transition || { duration: 0.5, ease: "easeOut" }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: i * 0.2 }}
           style={{
-            padding: '1.5rem',
-            background: el.color || 'var(--primary-color)',
-            color: '#fff',
-            borderRadius: el.type === 'circle' ? '50%' : '12px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            fontWeight: 'bold',
+            background: 'var(--bg-card)',
+            padding: '1.5rem',
+            borderRadius: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            minWidth: '150px',
+            maxWidth: '220px',
             textAlign: 'center',
-            minWidth: '100px',
-            minHeight: el.type === 'circle' ? '100px' : 'auto',
-            fontSize: '1.1rem'
+            border: '1px solid var(--border-color)',
+            flex: '1 1 150px'
           }}
         >
-          {el.text}
+          {item.icon && <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>{item.icon}</div>}
+          {item.text && <div style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--text-main)', wordWrap: 'break-word', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>{item.text}</div>}
         </motion.div>
       ))}
     </div>
   );
+};
+
+const ProcessEngine = ({ data }) => {
+  if (!data) return <p>Loading process...</p>;
+  let processData = data;
+  if (typeof processData === 'string') {
+    try { processData = JSON.parse(processData); } catch (e) { throw new Error("Invalid Process payload: Unparsable string"); }
+  }
+  if (!processData.steps) return <p>Loading process...</p>;
+
+  return (
+    <div key={JSON.stringify(processData.steps)} style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', width: '100%', minHeight: '150px', background: 'var(--bg-panel)', borderRadius: '8px', border: '1px solid var(--border-color)', padding: '2rem' }}>
+      {processData.steps.map((step, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, delay: i * 0.3 }}
+          style={{
+            padding: '1rem 1.5rem',
+            background: 'var(--primary-color)',
+            color: 'white',
+            borderRadius: '8px',
+            fontWeight: 'bold',
+            fontSize: '1.2rem',
+            boxShadow: '0 4px 10px rgba(0,0,0,0.2)'
+          }}
+        >
+          {step}
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+const ENGINE_REGISTRY = {
+  "StoryboardEngine": StoryboardEngine,
+  "ProcessEngine": ProcessEngine,
+  "echarts": EChartsRenderer,
+  "mermaid": MermaidChart,
+  "framer_motion": FramerMotionRenderer,
+  "reactflow": ConceptMapRenderer,
+  "recharts": RechartsRenderer,
+  "cytoscape": CytoscapeRenderer,
+  "reaflow": ReaflowRenderer
 };
 
 const SortableItem = ({ id, content }) => {
@@ -393,17 +517,21 @@ const ContentRenderer = ({ content, modality, darkMode }) => {
 
     switch (type) {
       case "visual":
+        const EngineComponent = ENGINE_REGISTRY[content.engine];
         return (
           <div className="visual-media" style={{ marginTop: "1rem", background: "var(--bg-panel)", padding: "1rem", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
             <ErrorBoundary>
-              {content.engine === "reactflow" && <ConceptMapRenderer data={content.payload} />}
-              {content.engine === "recharts" && <RechartsRenderer data={content.payload} />}
-              {content.engine === "mermaid" && <MermaidChart code={content.payload?.code || content.payload} darkMode={darkMode} />}
-              {content.engine === "echarts" && <EChartsRenderer data={content.payload} darkMode={darkMode} />}
-              {content.engine === "cytoscape" && <CytoscapeRenderer data={content.payload} />}
-              {content.engine === "reaflow" && <ReaflowRenderer data={content.payload} />}
-              {content.engine === "framer_motion" && <FramerMotionRenderer data={content.payload} />}
-              {!["reactflow", "recharts", "mermaid", "echarts", "cytoscape", "reaflow", "framer_motion"].includes(content.engine) && <EChartsRenderer data={content.payload} darkMode={darkMode} />}
+              {EngineComponent ? (
+                content.engine === "mermaid" ? (
+                  <MermaidChart code={content.payload?.code || content.payload} darkMode={darkMode} />
+                ) : content.engine === "echarts" ? (
+                  <EChartsRenderer data={content.payload} darkMode={darkMode} />
+                ) : (
+                  <EngineComponent data={content.payload} />
+                )
+              ) : (
+                <EChartsRenderer data={content.payload} darkMode={darkMode} />
+              )}
             </ErrorBoundary>
           </div>
         );
@@ -733,50 +861,15 @@ function Learn() {
   const currentPracticeQuestion = data?.response?.practice_question || data?.response?.practice || latestStep?.content?.practice_question || latestStep?.content?.practice;
 
   return (
-    <div className={`learn-container ${darkMode ? "dark" : ""}`}>
+    <div className={`dashboard-layout ${darkMode ? "dark" : ""}`}>
       
-      {/* TOP RIGHT CONTROLS */}
-      <div className="top-right-controls">
-        <button className="dashboard-btn" onClick={() => navigate("/dashboard")}>
-          Dashboard
-        </button>
-        <button
-          className="theme-toggle"
-          onClick={() => {
-            const newTheme = !darkMode;
-            setDarkMode(newTheme);
-            localStorage.setItem("theme", newTheme ? "dark" : "light");
-          }}
-        >
-          {darkMode ? "☀️" : "🌙"}
-        </button>
-      </div>
-
       {/* LEFT SIDEBAR */}
-      <aside className="history-sidebar">
-        <h3>Your Journey</h3>
-        {history.length === 0 ? (
-          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem", paddingLeft: "0.5rem" }}>
-            No past lessons yet.
-          </p>
-        ) : (
-          <ul>
-            {history.map((item, idx) => (
-              <li
-                key={idx}
-                className={item.topic === topic ? "active-history" : ""}
-                onClick={() => navigate(`/learn/${item.topic}`)}
-              >
-                <span className="history-topic">{item.topic}</span>
-                <span className="history-level badge">{item.detail_level}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </aside>
+      <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
 
-      {/* RIGHT CONTENT AREA */}
-      <main className="content-area">
+      {/* CENTER CONTENT AND RIGHT SIDEBAR WRAPPER */}
+      <div className="learn-page-wrapper">
+        {/* CENTER CONTENT AREA */}
+        <main className="main-content learn-main">
         
         {/* START SCREEN */}
         {!topic && !data && (
@@ -834,16 +927,24 @@ function Learn() {
                   </button>
                   <SpeechInput onResult={(text) => setPracticeAnswer(prev => prev ? prev + " " + text : text)} />
                 </div>
-                
                 {practiceResult && (
-                  <div className="practice-result">
-                    <p style={{ fontWeight: "600", marginBottom: "0.5rem" }}>
-                      {practiceResult.correct ? "✅ Correct!" : "❌ Let's review"}
+                  <div className={`practice-result ${practiceResult.correct ? 'correct' : 'incorrect'}`} style={{
+                    marginTop: '1rem', padding: '1rem', borderRadius: '8px',
+                    border: `1px solid ${practiceResult.correct ? '#10b981' : '#ef4444'}`,
+                    background: practiceResult.correct ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+                  }}>
+                    <p style={{ fontWeight: "600", marginBottom: "0.5rem", color: practiceResult.correct ? '#10b981' : '#ef4444' }}>
+                      {practiceResult.correct ? "Correct! Great job." : "Not quite right. Let's review!"}
                     </p>
-                    <p>{practiceResult.feedback}</p>
+                    <p style={{ color: 'var(--text-secondary)' }}>{practiceResult.feedback}</p>
                     {practiceResult.improved_answer && (
-                      <p style={{ marginTop: "1rem" }}>
+                      <p style={{ marginTop: "1rem", color: 'var(--text-main)' }}>
                         <b>Better Answer:</b> {practiceResult.improved_answer}
+                      </p>
+                    )}
+                    {!practiceResult.correct && (
+                      <p style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#8b5cf6", fontWeight: "bold" }}>
+                        ✨ The AI will adapt and re-teach this concept in a different learning style!
                       </p>
                     )}
                   </div>
@@ -867,14 +968,44 @@ function Learn() {
                   <button className="primary-btn" onClick={() => handleFeedback("custom")} disabled={feedbackSending || loading}>
                     {feedbackSending ? "Sending..." : "Send Note"}
                   </button>
-                  <button className="next primary-btn" onClick={gotonext} disabled={feedbackSending || loading}>Next Step ➡️</button>
+                  {practiceResult && !practiceResult.correct ? (
+                    <button className="next primary-btn" onClick={gotonext} disabled={feedbackSending || loading} style={{ background: "#8b5cf6", borderColor: "#8b5cf6" }}>
+                      Re-learn Concept ✨
+                    </button>
+                  ) : (
+                    <button className="next primary-btn" onClick={gotonext} disabled={feedbackSending || loading}>Next Step ➡️</button>
+                  )}
                 </div>
               </div>
             )}
             <div ref={endOfLessonRef} />
           </div>
         )}
-      </main>
+        </main>
+
+        {/* RIGHT SIDEBAR FOR JOURNEY */}
+        <aside className="right-journey-sidebar">
+          <h3 className="journey-title">Your Journey</h3>
+          {history.length === 0 ? (
+            <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+              No past lessons yet.
+            </p>
+          ) : (
+            <ul className="journey-list">
+              {history.map((item, idx) => (
+                <li
+                  key={idx}
+                  className={`journey-item ${item.topic === topic ? "active" : ""}`}
+                  onClick={() => navigate(`/learn/${item.topic}`)}
+                >
+                  <span className="journey-topic">{item.topic}</span>
+                  <span className="journey-level">{item.detail_level}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </aside>
+      </div>
     </div>
   );
 }
