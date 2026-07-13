@@ -1,6 +1,7 @@
 from fastapi import APIRouter
-from app.db import users_collection
+from app.db import users_collection, lessons_collection
 from bson import ObjectId, Decimal128
+from app.utils.streak import update_user_streak
 router = APIRouter()
 def json_serializable(doc):
     """Recursively converts BSON types to JSON-friendly types."""
@@ -38,6 +39,9 @@ async def save_user(user: dict):
 
             "xp": 0,
             "streak": 0,
+            "current_streak": 0,
+            "max_streak": 0,
+            "last_active_date": "",
             "learning_log": [],
             "completed_topics": [],
             "weak_areas": [],
@@ -92,6 +96,9 @@ async def get_user(email: str):
                 "favorite_style": "",
                 "xp": 0,
                 "streak": 0,
+                "current_streak": 0,
+                "max_streak": 0,
+                "last_active_date": "",
                 "learning_log": [],
                 "completed_topics": [],
                 "weak_areas": [],
@@ -114,6 +121,8 @@ async def get_user(email: str):
     }
             }
 
+        user = update_user_streak(user)
+        user["lessonsCount"] = lessons_collection.count_documents({"email": email})
         return json_serializable(user)
 
     except Exception as e:
@@ -143,14 +152,30 @@ async def update_user(email: str, data: dict):
             if field in data
         }
 
-        if not update_fields:
+        if not update_fields and "style_boosts" not in data:
             return {
                 "message": "No valid fields to update"
             }
 
+        updates = {}
+        if update_fields:
+            updates["$set"] = update_fields
+            
+        style_boosts = data.get("style_boosts", [])
+        if style_boosts:
+            inc_fields = {}
+            for style in style_boosts:
+                if style in ["visual", "auditory", "read_write", "kinesthetic"]:
+                    inc_fields[f"learning_style.{style}"] = 2
+            if inc_fields:
+                updates["$inc"] = inc_fields
+
+        if not updates:
+            return {"message": "No valid fields to update"}
+
         result = users_collection.update_one(
             {"email": email},
-            {"$set": update_fields}
+            updates
         )
 
         if result.matched_count == 0:

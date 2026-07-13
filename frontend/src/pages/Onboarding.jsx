@@ -14,9 +14,11 @@ function Onboarding() {
 
   const email = localStorage.getItem("userEmail");
 
-  // ✅ Preferences INSIDE component
   const [preferences, setPreferences] = useState({
     visual: false,
+    auditory: false,
+    read_write: false,
+    kinesthetic: false,
     step_by_step: false,
     examples: false,
     analogies: false,
@@ -37,13 +39,18 @@ function Onboarding() {
   // SAVE PREFERENCES
   // -------------------------
   const handleSubmit = async () => {
-
     try {
+      const style_boosts = [];
+      if (preferences.visual) style_boosts.push("visual");
+      if (preferences.auditory) style_boosts.push("auditory");
+      if (preferences.read_write) style_boosts.push("read_write");
+      if (preferences.kinesthetic) style_boosts.push("kinesthetic");
 
       await API.put(`/update-user/${email}`, {
         teaching_preferences: preferences,
-        onboarding_completed: true
-            });
+        onboarding_completed: true,
+        style_boosts: style_boosts
+      });
 
       navigate("/dashboard");
 
@@ -96,23 +103,40 @@ function Onboarding() {
             How do you usually understand concepts best?
           </h3>
 
-          {/* VISUAL */}
-
           <label className="option">
-
             <input
               type="checkbox"
               checked={preferences.visual}
-              onChange={(e) =>
-                setPreferences({
-                  ...preferences,
-                  visual: e.target.checked
-                })
-              }
+              onChange={(e) => setPreferences({ ...preferences, visual: e.target.checked })}
             />
+            Visual Explanations (Diagrams, charts)
+          </label>
 
-            Visual Explanations
+          <label className="option">
+            <input
+              type="checkbox"
+              checked={preferences.auditory}
+              onChange={(e) => setPreferences({ ...preferences, auditory: e.target.checked })}
+            />
+            Auditory (Conversational, dialogue-based)
+          </label>
 
+          <label className="option">
+            <input
+              type="checkbox"
+              checked={preferences.read_write}
+              onChange={(e) => setPreferences({ ...preferences, read_write: e.target.checked })}
+            />
+            Reading/Writing (Detailed text, bullet points)
+          </label>
+
+          <label className="option">
+            <input
+              type="checkbox"
+              checked={preferences.kinesthetic}
+              onChange={(e) => setPreferences({ ...preferences, kinesthetic: e.target.checked })}
+            />
+            Kinesthetic (Interactive, hands-on examples)
           </label>
 
           {/* STEP BY STEP */}
